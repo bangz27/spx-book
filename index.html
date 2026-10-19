@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#ee4d2d">
+  <title>SPX Book</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- กำลังโหลด -->
+  <main id="view-loading" class="center-screen">
+    <div class="spinner"></div>
+  </main>
+
+  <!-- ล็อกอิน -->
+  <main id="view-login" class="center-screen" hidden>
+    <div class="card login-card">
+      <div class="brand">SPX <span>Book</span></div>
+      <p class="muted">เข้าสู่ระบบด้วยอีเมล ระบบจะส่งลิงก์ไปให้กด (ไม่ต้องใช้รหัสผ่าน)</p>
+      <form id="login-form" novalidate>
+        <label for="login-email">อีเมล</label>
+        <input id="login-email" type="email" inputmode="email" autocomplete="email" placeholder="name@example.com" required>
+        <button id="login-btn" class="btn primary block" type="submit">ส่งลิงก์เข้าสู่ระบบ</button>
+      </form>
+      <div id="login-msg" class="msg" hidden></div>
+    </div>
+  </main>
+
+  <!-- ไม่มีสิทธิ์ -->
+  <main id="view-denied" class="center-screen" hidden>
+    <div class="card login-card">
+      <div class="brand">SPX <span>Book</span></div>
+      <div class="msg error">อีเมล <b id="denied-email"></b> ไม่มีสิทธิ์ใช้งาน กรุณาติดต่อ Admin</div>
+      <button class="btn block js-logout" type="button">ออกจากระบบ</button>
+    </div>
+  </main>
+
+  <!-- แอปหลัก -->
+  <div id="view-app" hidden>
+    <header class="topbar">
+      <div class="brand small">SPX <span>Book</span></div>
+      <div class="who">
+        <span id="who-email"></span>
+        <button class="link js-logout" type="button">ออก</button>
+      </div>
+    </header>
+
+    <nav class="tabs" role="tablist">
+      <button class="tab active" data-tab="send" type="button">ส่งงาน</button>
+      <button class="tab" data-tab="history" type="button">ประวัติวันนี้</button>
+      <button class="tab" data-tab="admin" type="button" id="tab-admin" hidden>Admin</button>
+    </nav>
+
+    <!-- ส่งงาน -->
+    <section id="page-send" class="page">
+      <div class="card">
+        <label for="shop-select">PUP (เลือกได้หลายร้าน)</label>
+        <select id="shop-select">
+          <option value="">— เลือกร้าน —</option>
+        </select>
+
+        <div class="row">
+          <input id="pup-custom" type="text" placeholder="หรือกรอก PUP ID เอง" autocapitalize="characters" autocomplete="off" spellcheck="false">
+          <button id="pup-add" class="btn" type="button">เพิ่ม</button>
+        </div>
+
+        <div id="pup-chips" class="chips"></div>
+        <p id="pup-empty" class="muted small">ยังไม่ได้เลือกร้าน</p>
+
+        <label for="driver-id">Driver ID</label>
+        <input id="driver-id" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="ตัวเลขเท่านั้น" autocomplete="off">
+
+        <button id="send-btn" class="btn primary block big" type="button">ส่งงาน</button>
+        <div id="send-msg" class="msg" hidden></div>
+        <button id="send-new" class="btn block" type="button" hidden>ส่งงานใหม่</button>
+      </div>
+    </section>
+
+    <!-- ประวัติวันนี้ -->
+    <section id="page-history" class="page" hidden>
+      <div class="section-head">
+        <h2>งานที่ส่งวันนี้ <span id="history-count" class="pill"></span></h2>
+        <button id="history-refresh" class="btn small" type="button">รีเฟรช</button>
+      </div>
+      <div id="history-list"></div>
+    </section>
+
+    <!-- Admin -->
+    <section id="page-admin" class="page" hidden>
+      <div class="card">
+        <h2>ผู้ใช้ที่อนุญาต</h2>
+        <form id="user-form" class="stack" novalidate>
+          <input id="user-email" type="email" inputmode="email" placeholder="อีเมล" required>
+          <input id="user-name" type="text" placeholder="ชื่อ (ไม่บังคับ)">
+          <label class="check"><input id="user-admin" type="checkbox"> เป็น Admin</label>
+          <button class="btn primary" type="submit">เพิ่มผู้ใช้</button>
+        </form>
+        <div id="user-msg" class="msg" hidden></div>
+        <div id="user-list" class="list"></div>
+      </div>
+
+      <div class="card">
+        <h2>รายชื่อร้าน (PUP)</h2>
+        <form id="shop-form" class="stack" novalidate>
+          <input id="shop-name" type="text" placeholder="ชื่อร้าน" required>
+          <input id="shop-pup" type="text" placeholder="PUP ID" autocapitalize="characters" required>
+          <button class="btn primary" type="submit">เพิ่ม / แก้ไขร้าน</button>
+        </form>
+        <div id="shop-msg" class="msg" hidden></div>
+        <div id="shop-list" class="list"></div>
+      </div>
+    </section>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -127,11 +127,28 @@
     </section>
   </div>
 
+  <!-- อุดหนุนบอต -->
+  <footer class="donate-bar">
+    <button id="donate-btn" class="btn donate-btn" type="button">🤖 อุดหนุนบอตหนูหน่อยน้า</button>
+  </footer>
+  <div id="donate-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="donate-title" hidden>
+    <div class="modal-card">
+      <h2 id="donate-title">ช่วยอุดหนุนบอตหนูหน่อยน้า 🥺</h2>
+      <p class="muted">ค่าไฟ ค่าเน็ต ค่าขนมให้บอตบุ๊คงานได้ทุกวัน เท่าไหร่ก็ได้ ขอบคุณครับ 💛</p>
+      <img src="img/promptpay.jpg" alt="QR พร้อมเพย์ นิติพนธ์ แดงเนียม" class="qr" loading="lazy">
+      <div class="modal-actions">
+        <a class="btn primary" href="img/promptpay.jpg" download="promptpay-spx-book.jpg">บันทึกรูป</a>
+        <button id="donate-close" class="btn dark" type="button">ปิด</button>
+      </div>
+    </div>
+  </div>
+
   <button id="install-btn" class="btn primary install-fab" type="button" hidden>📲 ติดตั้งแอป</button>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
   <script src="config.js"></script>
   <script src="app.js"></script>
   <script src="pwa.js"></script>
+  <script src="donate.js"></script>
 </body>
 </html>

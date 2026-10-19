@@ -121,3 +121,21 @@ input:disabled, select:disabled { opacity: .6; }
 /* PWA install button */
 .install-fab { position: fixed; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); z-index: 50; border-radius: 999px; box-shadow: 0 6px 18px rgba(0,0,0,.18); }
 .install-fab[hidden] { display: none; }
+
+/* อุดหนุนบอต */
+.donate-bar { display: flex; justify-content: center; padding: 24px 16px calc(28px + env(safe-area-inset-bottom)); }
+.donate-btn { border-radius: 999px; background: #1a1a1a; border-color: #1a1a1a; color: #fff; font-weight: 700; padding: 10px 20px; box-shadow: 0 4px 14px rgba(238,77,45,.35); animation: donate-bob 2.6s ease-in-out infinite; }
+.donate-btn:hover { background: var(--brand); border-color: var(--brand); }
+@keyframes donate-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+body.modal-open { overflow: hidden; }
+.modal { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(10,10,10,.6); backdrop-filter: blur(3px); }
+.modal[hidden] { display: none; }
+.modal-card { width: 100%; max-width: 380px; max-height: 100%; overflow: auto; background: var(--card); color: var(--text); border-radius: 24px; padding: 20px 18px 18px; text-align: center; border-top: 6px solid var(--brand); box-shadow: 0 18px 48px rgba(0,0,0,.35); animation: modal-pop .35s cubic-bezier(.2,1.4,.4,1); }
+.modal-card h2 { margin: 4px 0 6px; font-size: 20px; }
+.modal-card p { margin: 0 0 14px; font-size: 15px; line-height: 1.5; }
+.modal-card .qr { display: block; width: 100%; height: auto; border-radius: 16px; border: 1px solid var(--line); background: #fff; }
+.modal-actions { display: flex; gap: 10px; margin-top: 14px; }
+.modal-actions > * { flex: 1; text-align: center; text-decoration: none; border-radius: 999px; }
+.btn.dark { background: #1a1a1a; border-color: #1a1a1a; color: #fff; }
+@keyframes modal-pop { 0% { transform: scale(.85) translateY(12px); opacity: 0; } 100% { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .donate-btn, .modal-card { animation: none; } }

@@ -19,12 +19,15 @@
   <main id="view-login" class="center-screen" hidden>
     <div class="card login-card">
       <div class="brand">SPX <span>Book</span></div>
-      <p class="muted">เข้าสู่ระบบด้วยอีเมล ระบบจะส่งลิงก์ไปให้กด (ไม่ต้องใช้รหัสผ่าน)</p>
+      <p class="muted">เข้าสู่ระบบด้วยอีเมลและรหัสผ่าน</p>
       <form id="login-form" novalidate>
         <label for="login-email">อีเมล</label>
-        <input id="login-email" type="email" inputmode="email" autocomplete="email" placeholder="name@example.com" required>
-        <button id="login-btn" class="btn primary block" type="submit">ส่งลิงก์เข้าสู่ระบบ</button>
+        <input id="login-email" type="email" inputmode="email" autocomplete="username" placeholder="name@example.com" required>
+        <label for="login-password">รหัสผ่าน</label>
+        <input id="login-password" type="password" autocomplete="current-password" placeholder="รหัสผ่าน" required>
+        <button id="login-btn" class="btn primary block" type="submit">เข้าสู่ระบบ</button>
       </form>
+      <p class="muted small">ลืมรหัสผ่าน ติดต่อแอดมิน</p>
       <div id="login-msg" class="msg" hidden></div>
     </div>
   </main>
@@ -92,6 +95,7 @@
     <section id="page-admin" class="page" hidden>
       <div class="card">
         <h2>ผู้ใช้ที่อนุญาต</h2>
+        <p class="muted small">เพิ่มอีเมลที่นี่ก่อน แล้วไปสร้างผู้ใช้ใน Supabase (Authentication → Users → Add user → Create new user) ใส่อีเมลเดียวกัน ตั้งรหัสผ่าน และติ๊ก Auto Confirm User จากนั้นส่งรหัสผ่านให้สมาชิก</p>
         <form id="user-form" class="stack" novalidate>
           <input id="user-email" type="email" inputmode="email" placeholder="อีเมล" required>
           <input id="user-name" type="text" placeholder="ชื่อ (ไม่บังคับ)">

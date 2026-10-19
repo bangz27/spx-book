@@ -4,8 +4,7 @@
 
   const cfg = window.SPX_CONFIG || {};
   const sb = window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY, {
-    // implicit: เปิดลิงก์ในอีเมลจากแอปเมล/เบราว์เซอร์อื่นบนมือถือได้
-    auth: { flowType: "implicit", persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false },
   });
 
   const $ = (id) => document.getElementById(id);
@@ -39,31 +38,33 @@
   $("login-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     const email = $("login-email").value.trim().toLowerCase();
+    const password = $("login-password").value;
     const msg = $("login-msg");
     if (!/^\S+@\S+\.\S+$/.test(email)) return showMsg(msg, "error", "กรุณากรอกอีเมลให้ถูกต้อง");
+    if (!password) return showMsg(msg, "error", "กรุณากรอกรหัสผ่าน");
 
     const btn = $("login-btn");
     btn.disabled = true;
-    btn.textContent = "กำลังส่ง…";
-    const { error } = await sb.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: location.origin + location.pathname, shouldCreateUser: true },
-    });
+    btn.textContent = "กำลังเข้าสู่ระบบ…";
+    msg.hidden = true;
+    const { error } = await sb.auth.signInWithPassword({ email, password });
     btn.disabled = false;
-    btn.textContent = "ส่งลิงก์เข้าสู่ระบบ";
+    btn.textContent = "เข้าสู่ระบบ";
 
     if (error) {
       const m = String(error.message || "");
-      if (/ไม่มีสิทธิ์|not allowed|signups? not allowed|hook|403/i.test(m) || error.status === 403) {
-        showMsg(msg, "error", "อีเมลนี้ไม่มีสิทธิ์ใช้งาน กรุณาติดต่อ Admin");
-      } else if (/rate|seconds|after/i.test(m) || error.status === 429) {
-        showMsg(msg, "warn", "ขอลิงก์ถี่เกินไป รอสักครู่แล้วลองใหม่");
+      if (/invalid login credentials|invalid_credentials/i.test(m) || error.code === "invalid_credentials") {
+        showMsg(msg, "error", "อีเมลหรือรหัสผ่านไม่ถูกต้อง");
+      } else if (/not confirmed/i.test(m)) {
+        showMsg(msg, "error", "บัญชียังไม่ได้ยืนยัน กรุณาติดต่อแอดมิน");
+      } else if (/rate|too many/i.test(m) || error.status === 429) {
+        showMsg(msg, "warn", "ลองเข้าสู่ระบบถี่เกินไป รอสักครู่แล้วลองใหม่");
       } else {
-        showMsg(msg, "error", "ส่งลิงก์ไม่สำเร็จ: " + esc(m));
+        showMsg(msg, "error", "เข้าสู่ระบบไม่สำเร็จ ตรวจสอบอินเทอร์เน็ตแล้วลองใหม่");
       }
       return;
     }
-    showMsg(msg, "ok", `ส่งลิงก์ไปที่ <b>${esc(email)}</b> แล้ว เปิดอีเมลแล้วกดลิงก์เพื่อเข้าสู่ระบบ`);
+    $("login-password").value = "";
   });
 
   document.querySelectorAll(".js-logout").forEach((b) =>
@@ -80,15 +81,16 @@
 
     const { data, error } = await sb.from("allowed_emails").select("email,name,is_admin").eq("email", email).maybeSingle();
     if (error || !data) {
-      $("denied-email").textContent = email;
-      return showView("denied");
+      state.email = "";
+      await sb.auth.signOut();
+      showView("login");
+      showMsg($("login-msg"), "error", `อีเมล <b>${esc(email)}</b> ไม่มีสิทธิ์ใช้งาน กรุณาติดต่อแอดมิน`);
+      return;
     }
     state.isAdmin = !!data.is_admin;
     $("who-email").textContent = data.name ? `${data.name}` : email;
     $("tab-admin").hidden = !state.isAdmin;
     showView("app");
-    // ลบ token ออกจาก URL หลังเข้าระบบด้วยลิงก์
-    if (location.hash.includes("access_token")) history.replaceState(null, "", location.pathname);
     await loadShops();
     switchTab("send");
   }
@@ -266,7 +268,7 @@
       email, name: $("user-name").value.trim() || null, is_admin: $("user-admin").checked,
     });
     if (error) return showMsg(msg, "error", "เพิ่มไม่สำเร็จ: " + esc(error.message));
-    showMsg(msg, "ok", `เพิ่ม ${esc(email)} แล้ว — ให้เขาเปิดเว็บแล้วกรอกอีเมลเพื่อรับลิงก์`);
+    showMsg(msg, "ok", `เพิ่ม ${esc(email)} แล้ว — ต่อไปสร้างผู้ใช้ใน Supabase พร้อมรหัสผ่าน (ติ๊ก Auto Confirm User)`);
     e.target.reset();
     loadUsers();
   });
@@ -336,12 +338,5 @@
   if (!cfg.SUPABASE_URL || cfg.SUPABASE_URL.includes("YOUR-PROJECT")) {
     showView("login");
     showMsg($("login-msg"), "error", "ยังไม่ได้ใส่ค่า Supabase ในไฟล์ config.js");
-  }
-  // ถ้าลิงก์หมดอายุ Supabase จะส่ง error กลับมาใน URL
-  const hashErr = new URLSearchParams(location.hash.slice(1)).get("error_description");
-  if (hashErr) {
-    showView("login");
-    showMsg($("login-msg"), "error", "ลิงก์ใช้ไม่ได้หรือหมดอายุ กรุณาขอลิงก์ใหม่");
-    history.replaceState(null, "", location.pathname);
   }
 })();

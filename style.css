@@ -139,3 +139,15 @@ body.modal-open { overflow: hidden; }
 .btn.dark { background: #1a1a1a; border-color: #1a1a1a; color: #fff; }
 @keyframes modal-pop { 0% { transform: scale(.85) translateY(12px); opacity: 0; } 100% { transform: none; opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .donate-btn, .modal-card { animation: none; } }
+
+/* เปลี่ยนคนขับ */
+.tabs { overflow-x: auto; scrollbar-width: none; }
+.tab { flex: 1 0 auto; white-space: nowrap; padding: 10px 12px; font-size: 14px; }
+.card h2 { font-size: 17px; margin: 0 0 4px; }
+.pup-fields { margin: 0 0 8px; gap: 8px; }
+.pup-row { margin-top: 0; }
+.pup-row input { flex: 1; min-width: 0; }
+#mra-add { margin-bottom: 4px; border-style: dashed; color: var(--brand); border-color: var(--brand); }
+.job-top { gap: 8px; }
+.type-tag { margin-right: auto; font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--bg); color: var(--muted); }
+.type-tag.reassign, .type-tag.mass_reassign { background: #1a1a1a; color: #fff; }

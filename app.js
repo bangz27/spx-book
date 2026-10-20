@@ -100,7 +100,7 @@
   // ---------- แท็บ ----------
   function switchTab(tab) {
     document.querySelectorAll(".tab").forEach((t) => t.classList.toggle("active", t.dataset.tab === tab));
-    for (const p of ["send", "history", "admin"]) $("page-" + p).hidden = p !== tab;
+    for (const p of ["send", "reassign", "history", "admin"]) $("page-" + p).hidden = p !== tab;
     if (tab === "history") loadHistory();
     if (tab === "admin") { loadUsers(); renderShopAdmin(); }
   }
@@ -215,28 +215,130 @@
     $("send-new").hidden = true;
   });
 
+  // ---------- เปลี่ยนคนขับ ----------
+  const PUP_RE = /^PUP[A-Z0-9]{3,37}$/;
+  document.addEventListener("input", (e) => {
+    if (e.target.classList && e.target.classList.contains("js-digits")) {
+      const v = e.target.value.replace(/\D/g, "");
+      if (v !== e.target.value) e.target.value = v;
+    }
+  });
+
+  function rpcError(error) {
+    const m = (error && error.message) || "";
+    const auth = error && (error.code === "42501" || /JWT|permission/i.test(m));
+    if (auth) setTimeout(() => sb.auth.signOut(), 1500);
+    return error && error.code === "22023" ? m
+      : auth ? "เซสชันหมดอายุหรือไม่มีสิทธิ์ กรุณาเข้าสู่ระบบใหม่"
+      : "ส่งไม่สำเร็จ ตรวจสอบอินเทอร์เน็ตแล้วลองใหม่";
+  }
+  function resultMsg(msg, r, error) {
+    if (error) return showMsg(msg, "error", esc(rpcError(error))), false;
+    if (r && r.duplicate) return showMsg(msg, "warn", `<b>งานนี้ส่งไปแล้ว</b> เมื่อ ${esc(r.sent_at || "")} (ภายใน 10 นาที) ระบบไม่ส่งซ้ำ`), true;
+    showMsg(msg, "ok", `ส่งงานเรียบร้อย รอ Bot ดำเนินการ · ${esc((r && r.sent_at) || "")}`);
+    return true;
+  }
+  async function busy(btn, fn) {
+    if (btn.disabled) return;
+    const t = btn.textContent;
+    btn.disabled = true; btn.textContent = "กำลังส่ง…";
+    try { await fn(); } finally { btn.disabled = false; btn.textContent = t; }
+  }
+
+  $("ra-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const msg = $("ra-msg");
+    const pup = $("ra-pup").value.trim().toUpperCase();
+    const drv = $("ra-driver").value.trim();
+    if (!PUP_RE.test(pup)) return showMsg(msg, "error", "PUP ID ต้องขึ้นต้นด้วย PUP ตามด้วยตัวอักษรอังกฤษ/ตัวเลข");
+    if (!/^\d+$/.test(drv)) return showMsg(msg, "error", "กรุณากรอก Driver ID ใหม่เป็นตัวเลข");
+    busy($("ra-btn"), async () => {
+      const { data: r, error } = await sb.rpc("submit_reassign", { p_pup_id: pup, p_new_driver_id: drv });
+      if (resultMsg(msg, r, error) && !error && !r.duplicate) e.target.reset();
+    });
+  });
+
+  function addPupField(value = "") {
+    const row = document.createElement("div");
+    row.className = "row pup-row";
+    row.innerHTML = `<input type="text" class="mra-pup" placeholder="PUP202610200RPM7" autocapitalize="characters" autocomplete="off" spellcheck="false">
+      <button type="button" class="btn small danger mra-del" aria-label="ลบช่อง">ลบ</button>`;
+    row.querySelector("input").value = value;
+    $("mra-pups").appendChild(row);
+    syncDel();
+    return row.querySelector("input");
+  }
+  function syncDel() {
+    const rows = $("mra-pups").querySelectorAll(".pup-row");
+    rows.forEach((r) => { r.querySelector(".mra-del").hidden = rows.length <= 1; });
+  }
+  function resetMass() {
+    $("mra-pups").innerHTML = "";
+    addPupField();
+  }
+  resetMass();
+  $("mra-add").addEventListener("click", () => {
+    if ($("mra-pups").children.length >= 30) return showMsg($("mra-msg"), "error", "กรอก PUP ได้ไม่เกิน 30 ร้านต่อครั้ง");
+    addPupField().focus();
+  });
+  $("mra-pups").addEventListener("click", (e) => {
+    if (!e.target.classList.contains("mra-del")) return;
+    e.target.closest(".pup-row").remove();
+    syncDel();
+  });
+  $("mra-pups").addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && e.target.classList.contains("mra-pup")) { e.preventDefault(); $("mra-add").click(); }
+  });
+
+  $("mra-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const msg = $("mra-msg");
+    const cur = $("mra-current").value.trim();
+    const tgt = $("mra-target").value.trim();
+    const pups = [...new Set([...document.querySelectorAll(".mra-pup")].map((i) => i.value.trim().toUpperCase()).filter(Boolean))];
+    if (!/^\d+$/.test(cur)) return showMsg(msg, "error", "กรุณากรอก Driver ID ปัจจุบันเป็นตัวเลข");
+    if (!pups.length) return showMsg(msg, "error", "กรุณากรอก PUP ID อย่างน้อย 1 ร้าน");
+    const bad = pups.find((p) => !PUP_RE.test(p));
+    if (bad) return showMsg(msg, "error", `PUP ID ไม่ถูกต้อง: ${esc(bad)} (ต้องขึ้นต้นด้วย PUP)`);
+    if (pups.length > 30) return showMsg(msg, "error", "กรอก PUP ได้ไม่เกิน 30 ร้านต่อครั้ง");
+    if (!/^\d+$/.test(tgt)) return showMsg(msg, "error", "กรุณากรอก Driver ID ปลายทางเป็นตัวเลข");
+    if (cur === tgt) return showMsg(msg, "error", "Driver ID ปัจจุบันและปลายทางต้องไม่ซ้ำกัน");
+    busy($("mra-btn"), async () => {
+      const { data: r, error } = await sb.rpc("submit_mass_reassign", { p_current_driver_id: cur, p_pup_ids: pups, p_target_driver_id: tgt });
+      if (resultMsg(msg, r, error) && !error && !r.duplicate) { e.target.reset(); resetMass(); }
+    });
+  });
+
   // ---------- ประวัติวันนี้ ----------
   async function loadHistory() {
     const list = $("history-list");
     list.innerHTML = '<p class="muted">กำลังโหลด…</p>';
     const { data, error } = await sb.from("jobs")
-      .select("id,pup_ids,shop_names,driver_id,sender_email,created_at,status,note,error")
+      .select("id,pup_ids,shop_names,driver_id,sender_email,created_at,status,note,error,job_type,payload")
       .gte("created_at", todayStartIso())
       .order("created_at", { ascending: false })
       .limit(500);
     if (error) { list.innerHTML = '<p class="msg error">โหลดประวัติไม่สำเร็จ</p>'; return; }
     $("history-count").textContent = data.length;
     if (!data.length) { list.innerHTML = '<p class="muted">วันนี้ยังไม่มีงาน</p>'; return; }
+    const typeLabel = { book: "บุ๊คงาน", reassign: "เปลี่ยนคนขับ", mass_reassign: "Mass re-assign" };
+    const driverLine = (j) => {
+      const p = j.payload || {};
+      if (j.job_type === "mass_reassign") return `<span>Driver <b>${esc(p.current_driver_id || "?")}</b> → <b>${esc(p.target_driver_id || j.driver_id)}</b></span>`;
+      if (j.job_type === "reassign") return `<span>Driver ใหม่ <b>${esc(p.new_driver_id || j.driver_id)}</b></span>`;
+      return `<span>Driver <b>${esc(j.driver_id)}</b></span>`;
+    };
     const label = { pending: "รอบุ๊ค", processing: "กำลังบุ๊ค", done: "บุ๊คแล้ว", failed: "บุ๊คไม่สำเร็จ", sent: "ส่งแล้ว", test: "ทดสอบ" };
     list.innerHTML = data.map((j) => `
       <div class="card job">
         <div class="job-top">
           <span class="time">${esc(bkkTime(j.created_at))}</span>
+          <span class="type-tag ${esc(j.job_type || "book")}">${esc(typeLabel[j.job_type] || "บุ๊คงาน")}</span>
           <span class="badge ${esc(j.status)}">${esc(label[j.status] || j.status)}</span>
         </div>
         <div class="job-shops">${esc((j.shop_names || []).join(", "))}</div>
         <div class="muted small">${esc(j.pup_ids.join(", "))}</div>
-        <div class="job-meta"><span>Driver <b>${esc(j.driver_id)}</b></span><span class="muted small">${esc(j.sender_email)}</span></div>
+        <div class="job-meta">${driverLine(j)}<span class="muted small">${esc(j.sender_email)}</span></div>
         ${(j.note || j.error) ? `<div class="muted small">${esc(j.error || j.note)}</div>` : ""}
       </div>`).join("");
   }

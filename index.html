@@ -75,7 +75,7 @@
         </select>
 
         <div class="row">
-          <input id="pup-custom" type="text" placeholder="หรือกรอก PUP ID เอง" autocapitalize="characters" autocomplete="off" spellcheck="false">
+          <input id="pup-custom" class="js-pup-ac" type="text" placeholder="หรือพิมพ์ชื่อร้าน / PUP ID / ที่อยู่" autocapitalize="characters" autocomplete="off" spellcheck="false">
           <button id="pup-add" class="btn" type="button">เพิ่ม</button>
         </div>
 
@@ -97,7 +97,7 @@
         <h2>เปลี่ยนคนขับ (ร้านเดียว)</h2>
         <form id="ra-form" novalidate>
           <label for="ra-pup">PUP ID</label>
-          <input id="ra-pup" type="text" placeholder="PUP202610200RPM7" autocapitalize="characters" autocomplete="off" spellcheck="false">
+          <input id="ra-pup" class="js-pup-ac" type="text" placeholder="PUP202610200RPM7" autocapitalize="characters" autocomplete="off" spellcheck="false">
           <label for="ra-driver">Driver ID ใหม่</label>
           <input id="ra-driver" class="js-digits" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="53414" autocomplete="off">
           <button id="ra-btn" class="btn primary block big" type="submit">ส่งงานเปลี่ยนคนขับ</button>

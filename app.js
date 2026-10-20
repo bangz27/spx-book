@@ -92,6 +92,7 @@
     $("tab-admin").hidden = !state.isAdmin;
     showView("app");
     await loadShops();
+    loadDirectory();
     switchTab("send");
   }
 
@@ -215,6 +216,86 @@
     $("send-new").hidden = true;
   });
 
+  // ---------- Autocomplete ร้าน (ชื่อร้าน / PUP ID / ที่อยู่) ----------
+  state.dir = [];
+  async function loadDirectory() {
+    const { data, error } = await sb.from("pup_directory").select("pup_id,shop_name,address").order("pup_id").limit(5000);
+    if (error) return;
+    const map = new Map((data || []).map((d) => [d.pup_id, { pup: d.pup_id, name: d.shop_name || "", addr: d.address || "", nick: "" }]));
+    for (const s of state.shops) {
+      const e = map.get(s.pup_id) || { pup: s.pup_id, name: "", addr: "", nick: "" };
+      e.nick = s.name; map.set(s.pup_id, e);
+    }
+    state.dir = [...map.values()].map((e) => ({ ...e, hay: (e.pup + " " + e.nick + " " + e.name + " " + e.addr).toLowerCase() }));
+  }
+  const acBox = document.createElement("div");
+  acBox.className = "ac-box"; acBox.hidden = true; acBox.setAttribute("role", "listbox");
+  document.body.appendChild(acBox);
+  let acInput = null, acItems = [], acIdx = -1;
+  function acSearch(q) {
+    const terms = q.toLowerCase().split(/\s+/).filter(Boolean);
+    if (!terms.length) return [];
+    const res = [];
+    for (const e of state.dir) {
+      if (!terms.every((t) => e.hay.includes(t))) continue;
+      const t0 = terms[0], lp = e.pup.toLowerCase();
+      const score = lp === t0 ? 0 : lp.startsWith(t0) ? 1 : (e.nick.toLowerCase().startsWith(t0) || e.name.toLowerCase().startsWith(t0)) ? 2
+        : (e.nick + " " + e.name).toLowerCase().includes(t0) ? 3 : lp.includes(t0) ? 4 : 5;
+      res.push([score, e]);
+    }
+    return res.sort((x, y) => x[0] - y[0] || (y[1].nick ? 1 : 0) - (x[1].nick ? 1 : 0)).slice(0, 8).map((x) => x[1]);
+  }
+  function acClose() { acBox.hidden = true; acItems = []; acIdx = -1; }
+  function acPosition() {
+    if (!acInput) return;
+    const r = acInput.getBoundingClientRect();
+    acBox.style.left = (r.left + window.scrollX) + "px";
+    acBox.style.top = (r.bottom + window.scrollY + 4) + "px";
+    acBox.style.width = r.width + "px";
+  }
+  function acRender() {
+    if (!acItems.length) return acClose();
+    acBox.innerHTML = acItems.map((e, i) => `
+      <div class="ac-item${i === acIdx ? " active" : ""}" role="option" data-i="${i}">
+        <div class="ac-name">${e.nick ? `<b>${esc(e.nick)}</b> ` : ""}${esc(e.name || (e.nick ? "" : "(ไม่มีชื่อร้าน)"))}</div>
+        <div class="ac-pup">${esc(e.pup)}</div>
+        ${e.addr ? `<div class="ac-addr">${esc(e.addr)}</div>` : ""}
+      </div>`).join("");
+    acPosition(); acBox.hidden = false;
+  }
+  function acPick(i) {
+    const e = acItems[i], inp = acInput;
+    if (!e || !inp) return;
+    inp.value = e.pup;
+    acClose();
+    if (inp.id === "pup-custom") { if (addPup(e.pup)) inp.value = ""; }
+    inp.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+  document.addEventListener("input", (e) => {
+    const t = e.target;
+    if (!t.classList || !t.classList.contains("js-pup-ac")) return;
+    acInput = t; acIdx = -1;
+    acItems = t.value.trim().length >= 2 ? acSearch(t.value.trim()) : [];
+    acRender();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (acBox.hidden || e.target !== acInput) return;
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+      acIdx = (acIdx + (e.key === "ArrowDown" ? 1 : -1) + acItems.length) % acItems.length;
+      acRender();
+    } else if (e.key === "Enter" && acIdx >= 0) { e.preventDefault(); e.stopImmediatePropagation(); acPick(acIdx); }
+    else if (e.key === "Escape") acClose();
+  }, true);
+  acBox.addEventListener("pointerdown", (e) => {
+    const it = e.target.closest(".ac-item");
+    if (!it) return;
+    e.preventDefault();
+    acPick(+it.dataset.i);
+  });
+  document.addEventListener("focusout", (e) => { if (e.target === acInput) setTimeout(acClose, 150); });
+  window.addEventListener("resize", acPosition);
+
   // ---------- เปลี่ยนคนขับ ----------
   const PUP_RE = /^PUP[A-Z0-9]{3,37}$/;
   document.addEventListener("input", (e) => {
@@ -261,7 +342,7 @@
   function addPupField(value = "") {
     const row = document.createElement("div");
     row.className = "row pup-row";
-    row.innerHTML = `<input type="text" class="mra-pup" placeholder="PUP202610200RPM7" autocapitalize="characters" autocomplete="off" spellcheck="false">
+    row.innerHTML = `<input type="text" class="mra-pup js-pup-ac" placeholder="PUP202610200RPM7" autocapitalize="characters" autocomplete="off" spellcheck="false">
       <button type="button" class="btn small danger mra-del" aria-label="ลบช่อง">ลบ</button>`;
     row.querySelector("input").value = value;
     $("mra-pups").appendChild(row);

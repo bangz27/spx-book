@@ -151,3 +151,15 @@ body.modal-open { overflow: hidden; }
 .job-top { gap: 8px; }
 .type-tag { margin-right: auto; font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--bg); color: var(--muted); }
 .type-tag.reassign, .type-tag.mass_reassign { background: #1a1a1a; color: #fff; }
+
+/* Disable */
+.danger-card { border: 2px solid #b42318; border-top-width: 6px; }
+.danger-card h2 { color: #b42318; }
+.btn.danger-solid { background: #b42318; border-color: #b42318; color: #fff; font-weight: 700; }
+.btn.danger-solid:disabled { background: #6b6b70; border-color: #6b6b70; opacity: .55; }
+.danger-modal { border-top-color: #b42318; }
+.danger-icon { font-size: 40px; line-height: 1; }
+.big-id { margin: 10px 0 4px; padding: 10px; border-radius: 14px; background: #1a1a1a; color: #fff; font-size: 34px; font-weight: 700; letter-spacing: 2px; }
+.danger-note { color: #b42318; font-weight: 700; margin: 4px 0 8px; }
+.danger-modal label { text-align: left; }
+.type-tag.disable { background: #b42318; color: #fff; }

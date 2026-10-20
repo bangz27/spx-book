@@ -119,6 +119,17 @@
         </form>
         <div id="mra-msg" class="msg" hidden></div>
       </div>
+
+      <div class="card danger-card">
+        <h2>⛔ Disable คนขับ</h2>
+        <p class="muted small">Disable งาน Accepted ทั้งหมดของ Driver คนนี้ ย้อนกลับไม่ได้</p>
+        <form id="dis-form" novalidate>
+          <label for="dis-driver">Driver ID</label>
+          <input id="dis-driver" class="js-digits" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="169624" autocomplete="off">
+          <button id="dis-btn" class="btn danger-solid block big" type="submit">ส่งงาน Disable</button>
+        </form>
+        <div id="dis-msg" class="msg" hidden></div>
+      </div>
     </section>
 
     <!-- ประวัติวันนี้ -->
@@ -170,6 +181,21 @@
       <div class="modal-actions">
         <a class="btn primary" href="img/promptpay.jpg" download="promptpay-spx-book.jpg">บันทึกรูป</a>
         <button id="donate-close" class="btn dark" type="button">ปิด</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="dis-modal" class="modal" role="alertdialog" aria-modal="true" aria-labelledby="dis-title" hidden>
+    <div class="modal-card danger-modal">
+      <div class="danger-icon">⚠️</div>
+      <h2 id="dis-title">ยืนยัน Disable งาน Accepted ทั้งหมดของ Driver นี้?</h2>
+      <div id="dis-show" class="big-id"></div>
+      <p class="danger-note">ย้อนกลับไม่ได้</p>
+      <label for="dis-confirm-input">พิมพ์ Driver ID อีกครั้งเพื่อยืนยัน</label>
+      <input id="dis-confirm-input" class="js-digits" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off">
+      <div class="modal-actions">
+        <button id="dis-cancel" class="btn" type="button">ยกเลิก</button>
+        <button id="dis-ok" class="btn danger-solid" type="button" disabled>ยืนยัน Disable</button>
       </div>
     </div>
   </div>

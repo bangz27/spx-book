@@ -309,6 +309,38 @@
     });
   });
 
+  // ---------- Disable ----------
+  const disModal = $("dis-modal"), disInput = $("dis-confirm-input"), disOk = $("dis-ok");
+  let disDriver = "";
+  function closeDis() { disModal.hidden = true; document.body.classList.remove("modal-open"); }
+  $("dis-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const drv = $("dis-driver").value.trim();
+    if (!/^\d+$/.test(drv)) return showMsg($("dis-msg"), "error", "กรุณากรอก Driver ID เป็นตัวเลข");
+    $("dis-msg").hidden = true;
+    disDriver = drv;
+    $("dis-title").textContent = `ยืนยัน Disable งาน Accepted ทั้งหมดของ Driver ${drv}?`;
+    $("dis-show").textContent = drv;
+    disInput.value = "";
+    disOk.disabled = true;
+    disModal.hidden = false;
+    document.body.classList.add("modal-open");
+    disInput.focus();
+  });
+  disInput.addEventListener("input", () => { disOk.disabled = disInput.value.trim() !== disDriver; });
+  $("dis-cancel").addEventListener("click", closeDis);
+  disModal.addEventListener("click", (e) => { if (e.target === disModal) closeDis(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !disModal.hidden) closeDis(); });
+  disOk.addEventListener("click", async () => {
+    if (disOk.disabled || disInput.value.trim() !== disDriver) return;
+    disOk.disabled = true;
+    disOk.textContent = "กำลังส่ง…";
+    const { data: r, error } = await sb.rpc("submit_disable", { p_driver_id: disDriver });
+    disOk.textContent = "ยืนยัน Disable";
+    closeDis();
+    if (resultMsg($("dis-msg"), r, error) && !error && !r.duplicate) $("dis-form").reset();
+  });
+
   // ---------- ประวัติวันนี้ ----------
   async function loadHistory() {
     const list = $("history-list");
@@ -321,10 +353,11 @@
     if (error) { list.innerHTML = '<p class="msg error">โหลดประวัติไม่สำเร็จ</p>'; return; }
     $("history-count").textContent = data.length;
     if (!data.length) { list.innerHTML = '<p class="muted">วันนี้ยังไม่มีงาน</p>'; return; }
-    const typeLabel = { book: "บุ๊คงาน", reassign: "เปลี่ยนคนขับ", mass_reassign: "Mass re-assign" };
+    const typeLabel = { book: "บุ๊คงาน", reassign: "เปลี่ยนคนขับ", mass_reassign: "Mass re-assign", disable: "Disable" };
     const driverLine = (j) => {
       const p = j.payload || {};
       if (j.job_type === "mass_reassign") return `<span>Driver <b>${esc(p.current_driver_id || "?")}</b> → <b>${esc(p.target_driver_id || j.driver_id)}</b></span>`;
+      if (j.job_type === "disable") return `<span>Disable Driver <b>${esc(p.driver_id || j.driver_id)}</b></span>`;
       if (j.job_type === "reassign") return `<span>Driver ใหม่ <b>${esc(p.new_driver_id || j.driver_id)}</b></span>`;
       return `<span>Driver <b>${esc(j.driver_id)}</b></span>`;
     };

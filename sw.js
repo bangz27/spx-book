@@ -1,7 +1,7 @@
 // SPX Book service worker
-const CACHE = 'spx-book-v6';
+const CACHE = 'spx-book-v7';
 const SHELL = [
-  './', './index.html', './style.css', './app.js', './config.js', './pwa.js', './donate.js', './img/promptpay.jpg',
+  './', './index.html', './style.css', './app.js', './config.js', './pwa.js', './donate.js', './img/promptpay.jpg', './sounds/success.mp3',
   './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png',
   './icons/icon-maskable-512.png', './icons/apple-touch-icon.png'
@@ -21,7 +21,8 @@ self.addEventListener('activate', (e) => {
 
 self.addEventListener('fetch', (e) => {
   const req = e.request;
-  if (req.method !== 'GET') return;                  // non-GET: straight to network
+  if (req.method !== 'GET') return;
+  if (req.headers.has('range')) return;              // audio range requests: straight to network (Safari)                  // non-GET: straight to network
   const url = new URL(req.url);
   if (url.hostname.endsWith('supabase.co')) return;  // Supabase API/auth: never cached
   if (url.origin !== self.location.origin) return;   // CDN/fonts: browser default

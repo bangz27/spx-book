@@ -94,6 +94,7 @@
     await loadShops();
     loadDirectory();
     switchTab("send");
+    startWatch();
   }
 
   sb.auth.onAuthStateChange((_evt, session) => { setTimeout(() => onSession(session), 0); });
@@ -215,6 +216,69 @@
     $("send-msg").hidden = true;
     $("send-new").hidden = true;
   });
+
+  // ---------- เสียงแจ้งเตือนเมื่องานของเราสำเร็จ ----------
+  const SOUND_KEY = "spxbook.sound";
+  const snd = new Audio("sounds/success.mp3");
+  snd.preload = "auto";
+  let soundOn = localStorage.getItem(SOUND_KEY) !== "off";
+  let audioUnlocked = false;
+  function renderSoundBtn() {
+    const b = $("sound-toggle");
+    b.textContent = soundOn ? "🔔" : "🔕";
+    b.setAttribute("aria-pressed", String(soundOn));
+    b.title = soundOn ? "เสียงเปิดอยู่ (กดเพื่อปิด)" : "เสียงปิดอยู่ (กดเพื่อเปิด)";
+    $("sound-test").hidden = !soundOn;
+  }
+  function playSuccess(force) {
+    if (!soundOn && !force) return;
+    try { snd.currentTime = 0; const p = snd.play(); if (p) p.catch(() => {}); } catch (_) {}
+  }
+  // เบราว์เซอร์ต้องมีการแตะหน้าจอก่อนถึงจะเล่นเสียงได้ — ปลดล็อกตอนแตะครั้งแรก
+  function unlockAudio() {
+    if (audioUnlocked) return;
+    audioUnlocked = true;
+    snd.muted = true;
+    const p = snd.play();
+    const done = () => { snd.pause(); snd.currentTime = 0; snd.muted = false; };
+    if (p && p.then) p.then(done, () => { snd.muted = false; audioUnlocked = false; }); else done();
+  }
+  ["pointerdown", "keydown", "touchstart"].forEach((ev) => document.addEventListener(ev, unlockAudio, { capture: true, passive: true }));
+  $("sound-toggle").addEventListener("click", () => {
+    soundOn = !soundOn;
+    localStorage.setItem(SOUND_KEY, soundOn ? "on" : "off");
+    renderSoundBtn();
+    if (soundOn) playSuccess(true);
+  });
+  $("sound-test").addEventListener("click", () => playSuccess(true));
+  renderSoundBtn();
+
+  // เช็กสถานะงานของเราทุก 15 วินาที (ตอนเปิดแอปอยู่) — เล่นเสียงเมื่อเปลี่ยนเป็น "done"
+  const known = new Map(); // id -> status
+  let watchTimer = null, watchSeeded = false;
+  async function checkMyJobs() {
+    if (!state.email || state.view !== "app" || document.hidden) return;
+    const { data, error } = await sb.from("jobs").select("id,status")
+      .eq("sender_email", state.email).gte("created_at", todayStartIso()).limit(500);
+    if (error || !data) return;
+    let newlyDone = 0, changed = false;
+    for (const j of data) {
+      const prev = known.get(j.id);
+      if (prev !== j.status) changed = true;
+      if (watchSeeded && j.status === "done" && prev !== undefined && prev !== "done") newlyDone++;
+      known.set(j.id, j.status);
+    }
+    watchSeeded = true;
+    if (newlyDone) playSuccess(false);
+    if (changed && !$("page-history").hidden) loadHistory();
+  }
+  function startWatch() {
+    known.clear(); watchSeeded = false;
+    checkMyJobs();
+    clearInterval(watchTimer);
+    watchTimer = setInterval(checkMyJobs, 15000);
+  }
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) checkMyJobs(); });
 
   // ---------- Autocomplete ร้าน (ชื่อร้าน / PUP ID / ที่อยู่) ----------
   state.dir = [];

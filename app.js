@@ -492,6 +492,7 @@
     list.innerHTML = '<p class="muted">กำลังโหลด…</p>';
     const { data, error } = await sb.from("jobs")
       .select("id,pup_ids,shop_names,driver_id,sender_email,created_at,status,note,error,job_type,payload")
+      .eq("sender_email", state.email)
       .gte("created_at", todayStartIso())
       .order("created_at", { ascending: false })
       .limit(500);

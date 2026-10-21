@@ -490,9 +490,10 @@
   async function loadHistory() {
     const list = $("history-list");
     list.innerHTML = '<p class="muted">กำลังโหลด…</p>';
-    const { data, error } = await sb.from("jobs")
-      .select("id,pup_ids,shop_names,driver_id,sender_email,created_at,status,note,error,job_type,payload")
-      .eq("sender_email", state.email)
+    let hq = sb.from("jobs")
+      .select("id,pup_ids,shop_names,driver_id,sender_email,created_at,status,note,error,job_type,payload");
+    if (!state.isAdmin) hq = hq.eq("sender_email", state.email);
+    const { data, error } = await hq
       .gte("created_at", todayStartIso())
       .order("created_at", { ascending: false })
       .limit(500);
@@ -517,7 +518,7 @@
         </div>
         <div class="job-shops">${esc((j.shop_names || []).join(", "))}</div>
         <div class="muted small">${esc(j.pup_ids.join(", "))}</div>
-        <div class="job-meta">${driverLine(j)}<span class="muted small">${esc(j.sender_email)}</span></div>
+        <div class="job-meta">${driverLine(j)}${state.isAdmin ? `<span class="small">👤 ขอโดย <b>${esc(j.sender_email)}</b></span>` : ""}</div>
         ${(j.note || j.error) ? `<div class="muted small">${esc(j.error || j.note)}</div>` : ""}
       </div>`).join("");
   }

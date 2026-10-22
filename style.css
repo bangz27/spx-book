@@ -194,3 +194,6 @@ body.modal-open { overflow: hidden; }
 .cute-btn { background: #fff0f3; border: 2px dashed #ff7aa2; color: #c2185b; font-weight: 700; border-radius: 999px; }
 .cute-btn:hover { background: #ffe0e8; }
 .confirm-send { margin-top: 10px; border-radius: 999px; }
+.book-row + .book-row { margin-top: 0; }
+.row-hint { font-size: 13px; color: var(--ok); font-weight: 600; margin: 3px 4px 0; }
+.book-del { color: var(--err); border: 1px solid var(--err); border-radius: 12px; background: transparent; }

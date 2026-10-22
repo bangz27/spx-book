@@ -71,15 +71,10 @@
     <!-- ส่งงาน -->
     <section id="page-send" class="page">
       <div class="card">
-        <label for="pup-custom">ร้าน (เพิ่มได้หลายร้าน)</label>
-        <div class="stack add-shop">
-          <input id="pup-custom" class="js-pup-ac" type="text" placeholder="เช่น up2u, ตั้งเจริญ, สัง, พิชา หรือ PUP ID" autocomplete="off" spellcheck="false">
-          <button id="pup-add" class="btn add-btn block" type="button">＋ เพิ่มร้าน</button>
-        </div>
-        <p class="muted small hint">พิมพ์แล้วเลือกจากรายการ หรือกด “เพิ่มร้าน” · ร้านที่เลือก:</p>
-
-        <div id="pup-chips" class="chips"></div>
-        <p id="pup-empty" class="muted small">ยังไม่ได้เลือกร้าน</p>
+        <label>ร้าน (ช่องละ 1 ร้าน)</label>
+        <div id="book-pups" class="stack pup-fields"></div>
+        <button id="book-add" class="btn add-btn block" type="button">＋ เพิ่มช่อง</button>
+        <p class="muted small hint">พิมพ์ชื่อร้านหรือ PUP ID แล้วแตะเลือกจากรายการ · ช่องที่ว่างจะถูกข้าม</p>
 
         <label for="driver-id">Driver ID</label>
         <input id="driver-id" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="ตัวเลขเท่านั้น" autocomplete="off">

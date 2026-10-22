@@ -114,30 +114,53 @@
     const { data, error } = await sb.from("shops").select("pup_id,name,sort_order").order("sort_order").order("name");
     if (error) return;
     state.shops = data || [];
-    renderChips();
+    document.querySelectorAll(".book-pup").forEach(updateRowHint);
   }
 
-  function addPup(raw) {
-    const p = String(raw || "").trim().toUpperCase();
-    if (!p) return false;
-    if (!/^[A-Z0-9]{5,40}$/.test(p)) {
-      showMsg($("send-msg"), "error", "PUP ID ต้องเป็นตัวอักษรอังกฤษ/ตัวเลขเท่านั้น");
-      return false;
-    }
-    if (!state.selected.includes(p)) state.selected.push(p);
-    $("send-msg").hidden = true;
-    renderChips();
-    return true;
+  // ---------- ช่องร้าน (ช่องละ 1 ร้าน) ----------
+  const PH = "เช่น up2u, ตั้งเจริญ, สัง, พิชา หรือ PUP ID";
+  function updateRowHint(inp) {
+    const hint = inp.closest(".book-row").querySelector(".row-hint");
+    const v = inp.value.trim().toUpperCase();
+    const n = /^[A-Z0-9]{5,40}$/.test(v) ? shopName(v) : "";
+    hint.textContent = n ? "✓ " + n : "";
+    hint.hidden = !n;
   }
-
-  function renderChips() {
-    $("pup-chips").innerHTML = state.selected.map((p) => {
-      const n = shopName(p);
-      return `<span class="chip">${n ? `<b>${esc(n)}</b> ` : ""}${esc(p)}
-        <button type="button" data-pup="${esc(p)}" aria-label="ลบ">×</button></span>`;
-    }).join("");
-    $("pup-empty").hidden = state.selected.length > 0;
+  function syncBookDel() {
+    const rows = $("book-pups").querySelectorAll(".book-row");
+    rows.forEach((r) => { r.querySelector(".book-del").hidden = rows.length <= 1; });
   }
+  function addBookRow(value = "") {
+    const row = document.createElement("div");
+    row.className = "book-row";
+    row.innerHTML = `<div class="row pup-row">
+        <input type="text" class="book-pup js-pup-ac" placeholder="${PH}" autocomplete="off" spellcheck="false">
+        <button type="button" class="btn small danger book-del" aria-label="ลบช่อง">ลบ</button>
+      </div><div class="row-hint" hidden></div>`;
+    const inp = row.querySelector("input");
+    inp.value = value;
+    $("book-pups").appendChild(row);
+    syncBookDel();
+    updateRowHint(inp);
+    return inp;
+  }
+  function resetBookRows() { $("book-pups").innerHTML = ""; addBookRow(); }
+  resetBookRows();
+  $("book-add").addEventListener("click", () => {
+    if ($("book-pups").children.length >= 30) return showMsg($("send-msg"), "error", "เพิ่มได้ไม่เกิน 30 ร้านต่อครั้ง");
+    addBookRow().focus();
+  });
+  $("book-pups").addEventListener("click", (e) => {
+    if (!e.target.classList.contains("book-del") || sendBtn.disabled) return;
+    if ($("book-pups").children.length <= 1) return;
+    e.target.closest(".book-row").remove();
+    syncBookDel();
+  });
+  $("book-pups").addEventListener("input", (e) => { if (e.target.classList.contains("book-pup")) updateRowHint(e.target); });
+  $("book-pups").addEventListener("change", (e) => { if (e.target.classList.contains("book-pup")) updateRowHint(e.target); });
+  $("book-pups").addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && e.target.classList.contains("book-pup")) { e.preventDefault(); $("book-add").click(); }
+  });
 
   // แปลงข้อความที่พิมพ์ (ชื่อร้าน / PUP ID) เป็น PUP ID
   function resolvePup(raw) {
@@ -154,23 +177,6 @@
     if (/^PUP[A-Z0-9]{3,37}$/.test(up)) return { pup: up };
     return { err: "ไม่พบร้านนี้ ลองพิมพ์ชื่ออื่น หรือกรอก PUP ID เต็ม" };
   }
-  $("pup-add").addEventListener("click", () => {
-    const inp = $("pup-custom");
-    const r = resolvePup(inp.value);
-    if (r.pup) { if (addPup(r.pup)) inp.value = ""; acClose(); inp.focus(); return; }
-    showMsg($("send-msg"), "error", esc(r.err));
-    if (r.many) { inp.focus(); inp.dispatchEvent(new Event("input", { bubbles: true })); }
-  });
-  $("pup-custom").addEventListener("keydown", (e) => {
-    if (e.key === "Enter") { e.preventDefault(); $("pup-add").click(); }
-  });
-  $("pup-chips").addEventListener("click", (e) => {
-    const p = e.target.dataset && e.target.dataset.pup;
-    if (!p || $("send-btn").disabled) return;
-    state.selected = state.selected.filter((x) => x !== p);
-    renderChips();
-  });
-
   // Driver ID: ตัวเลขเท่านั้น
   $("driver-id").addEventListener("input", (e) => {
     const v = e.target.value.replace(/\D/g, "");
@@ -181,7 +187,8 @@
   const sendBtn = $("send-btn");
   function lockForm(locked) {
     sendBtn.disabled = locked;
-    for (const id of ["pup-custom", "pup-add", "driver-id"]) $(id).disabled = locked;
+    for (const id of ["book-add", "driver-id"]) $(id).disabled = locked;
+    document.querySelectorAll(".book-pup, .book-del").forEach((el) => { el.disabled = locked; });
   }
 
   const bookModal = $("book-modal");
@@ -189,13 +196,24 @@
   sendBtn.addEventListener("click", () => {
     if (sendBtn.disabled) return;
     const msg = $("send-msg");
-    // ถ้าพิมพ์ร้านค้างไว้แต่ยังไม่กดเพิ่ม ให้เพิ่มให้เลย
-    if ($("pup-custom").value.trim()) {
-      const r = resolvePup($("pup-custom").value);
-      if (!r.pup) return showMsg(msg, "error", esc(r.err));
-      if (!addPup(r.pup)) return;
-      $("pup-custom").value = "";
+    // อ่านทุกช่อง: ข้ามช่องว่าง, แปลงชื่อร้านเป็น PUP ID, ตัดร้านซ้ำ
+    const picked = [];
+    const inputs = [...document.querySelectorAll(".book-pup")];
+    for (let i = 0; i < inputs.length; i++) {
+      const inp = inputs[i];
+      if (!inp.value.trim()) continue;
+      const r = resolvePup(inp.value);
+      if (!r.pup) {
+        showMsg(msg, "error", `ช่องที่ ${i + 1}: ${esc(r.err)}`);
+        inp.focus();
+        if (r.many) inp.dispatchEvent(new Event("input", { bubbles: true }));
+        return;
+      }
+      inp.value = r.pup; updateRowHint(inp);
+      if (!picked.includes(r.pup)) picked.push(r.pup);
     }
+    if (picked.length > 30) return showMsg(msg, "error", "เลือก PUP ได้ไม่เกิน 30 ร้านต่อครั้ง");
+    state.selected = picked;
     const driver = $("driver-id").value.trim();
     if (!state.selected.length) return showMsg(msg, "error", "กรุณาเพิ่มร้านอย่างน้อย 1 ร้าน");
     if (!/^\d+$/.test(driver)) return showMsg(msg, "error", "กรุณากรอก Driver ID เป็นตัวเลข");
@@ -210,7 +228,7 @@
     document.body.classList.add("modal-open");
     $("book-modal-ok").focus();
   });
-  $("book-modal-back").addEventListener("click", () => { closeBookModal(); $("pup-custom").focus(); });
+  $("book-modal-back").addEventListener("click", () => { closeBookModal(); $("book-add").focus(); });
   bookModal.addEventListener("click", (e) => { if (e.target === bookModal) closeBookModal(); });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !bookModal.hidden) closeBookModal(); });
   $("book-modal-ok").addEventListener("click", () => { closeBookModal(); submitBooking(); });
@@ -269,9 +287,8 @@
   $("send-new").addEventListener("click", () => {
     state.selected = [];
     $("driver-id").value = "";
-    $("pup-custom").value = "";
-    renderChips();
     lockForm(false);
+    resetBookRows();
     sendBtn.textContent = "ส่งงาน";
     sendBtn.classList.remove("done");
     $("send-msg").hidden = true;
@@ -393,7 +410,6 @@
     if (!e || !inp) return;
     inp.value = e.pup;
     acClose();
-    if (inp.id === "pup-custom") { if (addPup(e.pup)) inp.value = ""; }
     inp.dispatchEvent(new Event("change", { bubbles: true }));
   }
   document.addEventListener("input", (e) => {

@@ -180,3 +180,13 @@ body.modal-open { overflow: hidden; }
 .icon-btn.small-txt { font-size: 12px; font-weight: 600; color: var(--brand); border-color: var(--brand); }
 .icon-btn[aria-pressed="false"] { opacity: .6; }
 .who { gap: 6px; }
+
+/* บุ๊คงาน: popup ยืนยัน */
+.hint { margin: 8px 0 4px; }
+.book-modal-tip { background: var(--warn-bg); color: var(--warn); border-radius: 12px; padding: 10px 12px; font-weight: 600; }
+.book-modal-sum { font-size: 15px; margin: 4px 0 6px; }
+.book-modal-list { text-align: left; max-height: 38vh; overflow-y: auto; margin: 0 0 4px; padding-left: 26px; font-size: 15px; }
+.book-modal-list li { padding: 4px 0; border-bottom: 1px solid var(--line); }
+.book-modal-list li:last-child { border-bottom: 0; }
+.add-shop { margin: 0; }
+.add-btn { border: 2px dashed var(--brand); color: var(--brand); background: transparent; font-weight: 700; }

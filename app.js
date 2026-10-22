@@ -32,7 +32,8 @@
     const d = new Date(Date.now() + 7 * 3600e3).toISOString().slice(0, 10);
     return new Date(`${d}T00:00:00+07:00`).toISOString();
   }
-  const shopName = (pup) => (state.shops.find((s) => s.pup_id === pup) || {}).name || "";
+  const shopName = (pup) => (state.shops.find((s) => s.pup_id === pup) || {}).name
+    || ((state.dir || []).find((e) => e.pup === pup) || {}).name || "";
 
   // ---------- ล็อกอิน ----------
   $("login-form").addEventListener("submit", async (e) => {
@@ -113,9 +114,6 @@
     const { data, error } = await sb.from("shops").select("pup_id,name,sort_order").order("sort_order").order("name");
     if (error) return;
     state.shops = data || [];
-    const sel = $("shop-select");
-    sel.innerHTML = '<option value="">— เลือกร้าน —</option>' +
-      state.shops.map((s) => `<option value="${esc(s.pup_id)}">${esc(s.name)} · ${esc(s.pup_id)}</option>`).join("");
     renderChips();
   }
 
@@ -141,8 +139,28 @@
     $("pup-empty").hidden = state.selected.length > 0;
   }
 
-  $("shop-select").addEventListener("change", (e) => { addPup(e.target.value); e.target.value = ""; });
-  $("pup-add").addEventListener("click", () => { if (addPup($("pup-custom").value)) $("pup-custom").value = ""; });
+  // แปลงข้อความที่พิมพ์ (ชื่อร้าน / PUP ID) เป็น PUP ID
+  function resolvePup(raw) {
+    const q = String(raw || "").trim();
+    if (!q) return { err: "พิมพ์ชื่อร้านหรือ PUP ID ก่อน" };
+    const up = q.toUpperCase(), lo = q.toLowerCase();
+    const dir = state.dir || [];
+    if (dir.some((e) => e.pup === up)) return { pup: up };
+    const exact = dir.filter((e) => e.nick.toLowerCase() === lo || e.name.toLowerCase() === lo);
+    if (exact.length === 1) return { pup: exact[0].pup };
+    const hits = acSearch(q);
+    if (hits.length === 1) return { pup: hits[0].pup };
+    if (hits.length > 1) return { err: "มีหลายร้านที่ตรงกับคำนี้ กรุณาเลือกจากรายการ", many: true };
+    if (/^PUP[A-Z0-9]{3,37}$/.test(up)) return { pup: up };
+    return { err: "ไม่พบร้านนี้ ลองพิมพ์ชื่ออื่น หรือกรอก PUP ID เต็ม" };
+  }
+  $("pup-add").addEventListener("click", () => {
+    const inp = $("pup-custom");
+    const r = resolvePup(inp.value);
+    if (r.pup) { if (addPup(r.pup)) inp.value = ""; acClose(); inp.focus(); return; }
+    showMsg($("send-msg"), "error", esc(r.err));
+    if (r.many) { inp.focus(); inp.dispatchEvent(new Event("input", { bubbles: true })); }
+  });
   $("pup-custom").addEventListener("keydown", (e) => {
     if (e.key === "Enter") { e.preventDefault(); $("pup-add").click(); }
   });
@@ -163,17 +181,45 @@
   const sendBtn = $("send-btn");
   function lockForm(locked) {
     sendBtn.disabled = locked;
-    for (const id of ["shop-select", "pup-custom", "pup-add", "driver-id"]) $(id).disabled = locked;
+    for (const id of ["pup-custom", "pup-add", "driver-id"]) $(id).disabled = locked;
   }
 
-  sendBtn.addEventListener("click", async () => {
+  const bookModal = $("book-modal");
+  function closeBookModal() { bookModal.hidden = true; document.body.classList.remove("modal-open"); }
+  sendBtn.addEventListener("click", () => {
     if (sendBtn.disabled) return;
     const msg = $("send-msg");
-    // ถ้ากรอก PUP ค้างไว้แต่ยังไม่กดเพิ่ม ให้เพิ่มให้เลย
-    if ($("pup-custom").value.trim()) { if (!addPup($("pup-custom").value)) return; $("pup-custom").value = ""; }
+    // ถ้าพิมพ์ร้านค้างไว้แต่ยังไม่กดเพิ่ม ให้เพิ่มให้เลย
+    if ($("pup-custom").value.trim()) {
+      const r = resolvePup($("pup-custom").value);
+      if (!r.pup) return showMsg(msg, "error", esc(r.err));
+      if (!addPup(r.pup)) return;
+      $("pup-custom").value = "";
+    }
     const driver = $("driver-id").value.trim();
-    if (!state.selected.length) return showMsg(msg, "error", "กรุณาเลือกหรือกรอก PUP อย่างน้อย 1 ร้าน");
+    if (!state.selected.length) return showMsg(msg, "error", "กรุณาเพิ่มร้านอย่างน้อย 1 ร้าน");
     if (!/^\d+$/.test(driver)) return showMsg(msg, "error", "กรุณากรอก Driver ID เป็นตัวเลข");
+    msg.hidden = true;
+    $("book-modal-count").textContent = `${state.selected.length} ร้าน`;
+    $("book-modal-driver").textContent = driver;
+    $("book-modal-list").innerHTML = state.selected.map((p) => {
+      const n = shopName(p);
+      return `<li>${n ? `<b>${esc(n)}</b> · ` : ""}<span class="muted">${esc(p)}</span></li>`;
+    }).join("");
+    bookModal.hidden = false;
+    document.body.classList.add("modal-open");
+    $("book-modal-ok").focus();
+  });
+  $("book-modal-back").addEventListener("click", () => { closeBookModal(); $("pup-custom").focus(); });
+  bookModal.addEventListener("click", (e) => { if (e.target === bookModal) closeBookModal(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !bookModal.hidden) closeBookModal(); });
+  $("book-modal-ok").addEventListener("click", () => { closeBookModal(); submitBooking(); });
+
+  async function submitBooking() {
+    if (sendBtn.disabled) return;
+    const msg = $("send-msg");
+    const driver = $("driver-id").value.trim();
+    if (!state.selected.length || !/^\d+$/.test(driver)) return;
 
     // ล็อกทันที กันกดซ้ำ
     lockForm(true);
@@ -203,7 +249,7 @@
       showMsg(msg, "error", esc(err));
       if (auth) setTimeout(() => sb.auth.signOut(), 1500);
     }
-  });
+  }
 
   $("send-new").addEventListener("click", () => {
     state.selected = [];

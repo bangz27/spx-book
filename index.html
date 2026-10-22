@@ -71,15 +71,12 @@
     <!-- ส่งงาน -->
     <section id="page-send" class="page">
       <div class="card">
-        <label for="shop-select">PUP (เลือกได้หลายร้าน)</label>
-        <select id="shop-select">
-          <option value="">— เลือกร้าน —</option>
-        </select>
-
-        <div class="row">
-          <input id="pup-custom" class="js-pup-ac" type="text" placeholder="หรือพิมพ์ชื่อร้าน / PUP ID / ที่อยู่" autocapitalize="characters" autocomplete="off" spellcheck="false">
-          <button id="pup-add" class="btn" type="button">เพิ่ม</button>
+        <label for="pup-custom">ร้าน (เพิ่มได้หลายร้าน)</label>
+        <div class="stack add-shop">
+          <input id="pup-custom" class="js-pup-ac" type="text" placeholder="เช่น up2u, ตั้งเจริญ, สัง, พิชา หรือ PUP ID" autocomplete="off" spellcheck="false">
+          <button id="pup-add" class="btn add-btn block" type="button">＋ เพิ่มร้าน</button>
         </div>
+        <p class="muted small hint">พิมพ์แล้วเลือกจากรายการ หรือกด “เพิ่มร้าน” · ร้านที่เลือก:</p>
 
         <div id="pup-chips" class="chips"></div>
         <p id="pup-empty" class="muted small">ยังไม่ได้เลือกร้าน</p>
@@ -183,6 +180,19 @@
       <div class="modal-actions">
         <a class="btn primary" href="img/promptpay.jpg" download="promptpay-spx-book.jpg">บันทึกรูป</a>
         <button id="donate-close" class="btn dark" type="button">ปิด</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="book-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="book-modal-title" hidden>
+    <div class="modal-card">
+      <h2 id="book-modal-title">ตรวจร้านก่อนส่งนะ 🙏</h2>
+      <p class="book-modal-tip">ถ้าจะบุ๊คหลายร้าน ให้เพิ่มให้ครบแล้วส่งทีเดียวเลยนะ จะได้ไม่เด้งหลายรอบ</p>
+      <div class="book-modal-sum"><span id="book-modal-count"></span> · Driver <b id="book-modal-driver"></b></div>
+      <ol id="book-modal-list" class="book-modal-list"></ol>
+      <div class="modal-actions">
+        <button id="book-modal-back" class="btn" type="button">กลับไปเพิ่มร้าน</button>
+        <button id="book-modal-ok" class="btn primary" type="button">ส่งงาน</button>
       </div>
     </div>
   </div>

@@ -1,7 +1,7 @@
 // SPX Book service worker
-const CACHE = 'spx-book-v13';
+const CACHE = 'spx-book-v14';
 const SHELL = [
-  './', './index.html', './style.css', './app.js', './config.js', './pwa.js', './donate.js', './img/promptpay.jpg', './sounds/success.mp3',
+  './', './index.html', './style.css', './app.js', './config.js', './pwa.js', './donate.js', './theme.js', './img/promptpay.jpg', './sounds/success.mp3',
   './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png',
   './icons/icon-maskable-512.png', './icons/apple-touch-icon.png'

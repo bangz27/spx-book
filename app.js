@@ -214,6 +214,21 @@
   bookModal.addEventListener("click", (e) => { if (e.target === bookModal) closeBookModal(); });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !bookModal.hidden) closeBookModal(); });
   $("book-modal-ok").addEventListener("click", () => { closeBookModal(); submitBooking(); });
+  // อุดหนุนจาก popup ยืนยัน: เปิด QR แล้วกลับมาที่ popup เดิม (ยังไม่ส่งงาน)
+  $("book-modal-donate").addEventListener("click", () => {
+    const dm = $("donate-modal");
+    if (!dm) return;
+    bookModal.hidden = true;
+    $("donate-btn").click();
+    const obs = new MutationObserver(() => {
+      if (!dm.hidden) return;
+      obs.disconnect();
+      bookModal.hidden = false;
+      document.body.classList.add("modal-open");
+      $("book-modal-ok").focus();
+    });
+    obs.observe(dm, { attributes: true, attributeFilter: ["hidden"] });
+  });
 
   async function submitBooking() {
     if (sendBtn.disabled) return;

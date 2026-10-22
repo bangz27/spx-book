@@ -190,3 +190,7 @@ body.modal-open { overflow: hidden; }
 .book-modal-list li:last-child { border-bottom: 0; }
 .add-shop { margin: 0; }
 .add-btn { border: 2px dashed var(--brand); color: var(--brand); background: transparent; font-weight: 700; }
+.book-actions > * { flex: 1 1 0; min-width: 0; white-space: normal; line-height: 1.25; padding: 10px 8px; font-size: 14px; }
+.cute-btn { background: #fff0f3; border: 2px dashed #ff7aa2; color: #c2185b; font-weight: 700; border-radius: 999px; }
+.cute-btn:hover { background: #ffe0e8; }
+.confirm-send { margin-top: 10px; border-radius: 999px; }

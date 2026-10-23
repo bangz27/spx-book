@@ -94,6 +94,7 @@
     showView("app");
     await loadShops();
     loadDirectory();
+    loadDrivers();
     switchTab("send");
     startWatch();
   }
@@ -177,11 +178,6 @@
     if (/^PUP[A-Z0-9]{3,37}$/.test(up)) return { pup: up };
     return { err: "ไม่พบร้านนี้ ลองพิมพ์ชื่ออื่น หรือกรอก PUP ID เต็ม" };
   }
-  // Driver ID: ตัวเลขเท่านั้น
-  $("driver-id").addEventListener("input", (e) => {
-    const v = e.target.value.replace(/\D/g, "");
-    if (v !== e.target.value) e.target.value = v;
-  });
 
   // ---------- ส่งงาน ----------
   const sendBtn = $("send-btn");
@@ -214,12 +210,12 @@
     }
     if (picked.length > 30) return showMsg(msg, "error", "เลือก PUP ได้ไม่เกิน 30 ร้านต่อครั้ง");
     state.selected = picked;
-    const driver = $("driver-id").value.trim();
     if (!state.selected.length) return showMsg(msg, "error", "กรุณาเพิ่มร้านอย่างน้อย 1 ร้าน");
-    if (!/^\d+$/.test(driver)) return showMsg(msg, "error", "กรุณากรอก Driver ID เป็นตัวเลข");
+    const driver = drvField("driver-id", msg, "Driver ID");
+    if (!driver) return;
     msg.hidden = true;
     $("book-modal-count").textContent = `${state.selected.length} ร้าน`;
-    $("book-modal-driver").textContent = driver;
+    $("book-modal-driver").textContent = driver + (drvName(driver) ? " · " + drvName(driver) : "");
     $("book-modal-list").innerHTML = state.selected.map((p) => {
       const n = shopName(p);
       return `<li>${n ? `<b>${esc(n)}</b> · ` : ""}<span class="muted">${esc(p)}</span></li>`;
@@ -286,7 +282,7 @@
 
   $("send-new").addEventListener("click", () => {
     state.selected = [];
-    $("driver-id").value = "";
+    $("driver-id").value = ""; updateDrvHint($("driver-id"));
     lockForm(false);
     resetBookRows();
     sendBtn.textContent = "ส่งงาน";
@@ -397,7 +393,11 @@
   }
   function acRender() {
     if (!acItems.length) return acClose();
-    acBox.innerHTML = acItems.map((e, i) => `
+    acBox.innerHTML = acItems.map((e, i) => e.drv ? `
+      <div class="ac-item${i === acIdx ? " active" : ""}" role="option" data-i="${i}">
+        <div class="ac-name"><b>${esc(e.name || "(ไม่มีชื่อ)")}</b></div>
+        <div class="ac-pup">${esc(e.code)}</div>
+      </div>` : `
       <div class="ac-item${i === acIdx ? " active" : ""}" role="option" data-i="${i}">
         <div class="ac-name">${e.nick ? `<b>${esc(e.nick)}</b> ` : ""}${esc(e.name || (e.nick ? "" : "(ไม่มีชื่อร้าน)"))}</div>
         <div class="ac-pup">${esc(e.pup)}</div>
@@ -408,7 +408,7 @@
   function acPick(i) {
     const e = acItems[i], inp = acInput;
     if (!e || !inp) return;
-    inp.value = e.pup;
+    inp.value = e.drv ? e.code : e.pup;
     acClose();
     inp.dispatchEvent(new Event("change", { bubbles: true }));
   }
@@ -436,6 +436,75 @@
   });
   document.addEventListener("focusout", (e) => { if (e.target === acInput) setTimeout(acClose, 150); });
   window.addEventListener("resize", acPosition);
+
+  // ---------- Autocomplete คนขับ (ชื่อ / รหัสพนักงาน) ----------
+  state.drivers = [];
+  async function loadDrivers() {
+    const { data, error } = await sb.from("drivers").select("driver_id,name").order("driver_id").limit(5000);
+    if (error) return;
+    state.drivers = (data || []).map((d) => ({ code: d.driver_id, name: d.name || "", hay: (d.driver_id + " " + (d.name || "")).toLowerCase() }));
+    document.querySelectorAll(".js-drv-ac").forEach(updateDrvHint);
+  }
+  function drvName(code) { const d = state.drivers.find((x) => x.code === code); return d ? d.name : ""; }
+  function drvSearch(q) {
+    const terms = q.toLowerCase().split(/\s+/).filter(Boolean);
+    if (!terms.length) return [];
+    const t0 = terms[0], res = [];
+    for (const d of state.drivers) {
+      if (!terms.every((t) => d.hay.includes(t))) continue;
+      const n = d.name.toLowerCase();
+      res.push([d.code === t0 ? 0 : d.code.startsWith(t0) ? 1 : n.startsWith(t0) ? 2 : n.includes(" " + t0) ? 3 : 4, d]);
+    }
+    return res.sort((x, y) => x[0] - y[0] || x[1].name.localeCompare(y[1].name, "th")).slice(0, 8).map((x) => x[1]);
+  }
+  function drvHintEl(inp) {
+    let h = inp.nextElementSibling;
+    if (!h || !h.classList.contains("drv-hint")) {
+      h = document.createElement("div"); h.className = "row-hint drv-hint"; h.hidden = true;
+      inp.insertAdjacentElement("afterend", h);
+    }
+    return h;
+  }
+  function updateDrvHint(inp) {
+    const h = drvHintEl(inp), v = inp.value.trim(), n = /^\d+$/.test(v) ? drvName(v) : "";
+    h.textContent = n ? "✓ " + n : ""; h.hidden = !n;
+  }
+  document.querySelectorAll(".js-drv-ac").forEach(drvHintEl);
+  // แปลงชื่อ → รหัส (ตัวเลขพิมพ์เองได้เสมอ)
+  function resolveDriver(raw) {
+    const v = raw.trim();
+    if (/^\d+$/.test(v)) return { code: v };
+    if (!v) return { err: "กรุณากรอกชื่อ หรือรหัสพนักงาน" };
+    const lv = v.toLowerCase().replace(/\s+/g, " ");
+    const exact = state.drivers.filter((d) => d.name.toLowerCase().replace(/\s+/g, " ") === lv);
+    if (exact.length === 1) return { code: exact[0].code };
+    const hits = drvSearch(v);
+    if (hits.length === 1) return { code: hits[0].code };
+    if (hits.length > 1) return { err: "มีหลายคนที่ตรงกับชื่อนี้ เลือกจากรายการ หรือกรอกรหัสพนักงาน", many: true };
+    return { err: "ไม่พบพนักงานชื่อนี้ กรุณากรอกรหัสพนักงาน (ตัวเลข)" };
+  }
+  function drvField(id, msg, label) {
+    const inp = $(id), r = resolveDriver(inp.value);
+    if (!r.code) {
+      showMsg(msg, "error", `${esc(label)}: ${esc(r.err)}`);
+      inp.focus();
+      if (r.many) inp.dispatchEvent(new Event("input", { bubbles: true }));
+      return "";
+    }
+    inp.value = r.code; updateDrvHint(inp);
+    return r.code;
+  }
+  document.addEventListener("input", (e) => {
+    const t = e.target;
+    if (!t.classList || !t.classList.contains("js-drv-ac")) return;
+    updateDrvHint(t);
+    acInput = t; acIdx = -1;
+    acItems = t.value.trim().length >= 1 ? drvSearch(t.value.trim()).map((d) => ({ drv: true, ...d })) : [];
+    if (acItems.length === 1 && acItems[0].code === t.value.trim()) acItems = [];
+    acRender();
+  });
+  document.addEventListener("change", (e) => { if (e.target.classList && e.target.classList.contains("js-drv-ac")) updateDrvHint(e.target); });
+  document.addEventListener("reset", (e) => setTimeout(() => e.target.querySelectorAll(".js-drv-ac").forEach(updateDrvHint)));
 
   // ---------- เปลี่ยนคนขับ ----------
   const PUP_RE = /^PUP[A-Z0-9]{3,37}$/;
@@ -471,9 +540,9 @@
     e.preventDefault();
     const msg = $("ra-msg");
     const pup = $("ra-pup").value.trim().toUpperCase();
-    const drv = $("ra-driver").value.trim();
     if (!PUP_RE.test(pup)) return showMsg(msg, "error", "PUP ID ต้องขึ้นต้นด้วย PUP ตามด้วยตัวอักษรอังกฤษ/ตัวเลข");
-    if (!/^\d+$/.test(drv)) return showMsg(msg, "error", "กรุณากรอก Driver ID ใหม่เป็นตัวเลข");
+    const drv = drvField("ra-driver", msg, "Driver ID ใหม่");
+    if (!drv) return;
     busy($("ra-btn"), async () => {
       const { data: r, error } = await sb.rpc("submit_reassign", { p_pup_id: pup, p_new_driver_id: drv });
       if (resultMsg(msg, r, error) && !error && !r.duplicate) e.target.reset();
@@ -515,15 +584,15 @@
   $("mra-form").addEventListener("submit", (e) => {
     e.preventDefault();
     const msg = $("mra-msg");
-    const cur = $("mra-current").value.trim();
-    const tgt = $("mra-target").value.trim();
+    const cur = drvField("mra-current", msg, "Driver ID ปัจจุบัน");
+    if (!cur) return;
     const pups = [...new Set([...document.querySelectorAll(".mra-pup")].map((i) => i.value.trim().toUpperCase()).filter(Boolean))];
-    if (!/^\d+$/.test(cur)) return showMsg(msg, "error", "กรุณากรอก Driver ID ปัจจุบันเป็นตัวเลข");
     if (!pups.length) return showMsg(msg, "error", "กรุณากรอก PUP ID อย่างน้อย 1 ร้าน");
     const bad = pups.find((p) => !PUP_RE.test(p));
     if (bad) return showMsg(msg, "error", `PUP ID ไม่ถูกต้อง: ${esc(bad)} (ต้องขึ้นต้นด้วย PUP)`);
     if (pups.length > 30) return showMsg(msg, "error", "กรอก PUP ได้ไม่เกิน 30 ร้านต่อครั้ง");
-    if (!/^\d+$/.test(tgt)) return showMsg(msg, "error", "กรุณากรอก Driver ID ปลายทางเป็นตัวเลข");
+    const tgt = drvField("mra-target", msg, "Driver ID ปลายทาง");
+    if (!tgt) return;
     if (cur === tgt) return showMsg(msg, "error", "Driver ID ปัจจุบันและปลายทางต้องไม่ซ้ำกัน");
     busy($("mra-btn"), async () => {
       const { data: r, error } = await sb.rpc("submit_mass_reassign", { p_current_driver_id: cur, p_pup_ids: pups, p_target_driver_id: tgt });
@@ -537,11 +606,11 @@
   function closeDis() { disModal.hidden = true; document.body.classList.remove("modal-open"); }
   $("dis-form").addEventListener("submit", (e) => {
     e.preventDefault();
-    const drv = $("dis-driver").value.trim();
-    if (!/^\d+$/.test(drv)) return showMsg($("dis-msg"), "error", "กรุณากรอก Driver ID เป็นตัวเลข");
+    const drv = drvField("dis-driver", $("dis-msg"), "Driver ID");
+    if (!drv) return;
     $("dis-msg").hidden = true;
     disDriver = drv;
-    $("dis-title").textContent = `ยืนยัน Disable งาน Accepted ทั้งหมดของ Driver ${drv}?`;
+    $("dis-title").textContent = `ยืนยัน Disable งาน Accepted ทั้งหมดของ Driver ${drv}${drvName(drv) ? " (" + drvName(drv) + ")" : ""}?`;
     $("dis-show").textContent = drv;
     disInput.value = "";
     disOk.disabled = true;

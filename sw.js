@@ -1,5 +1,5 @@
 // SPX Book service worker
-const CACHE = 'spx-book-v14';
+const CACHE = 'spx-book-v15';
 const SHELL = [
   './', './index.html', './style.css', './app.js', './config.js', './pwa.js', './donate.js', './theme.js', './img/promptpay.jpg', './sounds/success.mp3',
   './manifest.webmanifest',

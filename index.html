@@ -72,7 +72,7 @@
         <p class="muted small hint">พิมพ์ชื่อร้านหรือ PUP ID แล้วแตะเลือกจากรายการ · ช่องที่ว่างจะถูกข้าม</p>
 
         <label for="driver-id">Driver ID</label>
-        <input id="driver-id" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="ตัวเลขเท่านั้น" autocomplete="off">
+        <input id="driver-id" class="js-drv-ac" type="text" placeholder="พิมพ์ชื่อ หรือรหัส เช่น ตัวเลขเท่านั้น" autocomplete="off" spellcheck="false">
 
         <button id="send-btn" class="btn primary block big" type="button">ส่งงาน</button>
         <div id="send-msg" class="msg" hidden></div>
@@ -88,7 +88,7 @@
           <label for="ra-pup">PUP ID</label>
           <input id="ra-pup" class="js-pup-ac" type="text" placeholder="PUP202610200RPM7" autocapitalize="characters" autocomplete="off" spellcheck="false">
           <label for="ra-driver">Driver ID ใหม่</label>
-          <input id="ra-driver" class="js-digits" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="53414" autocomplete="off">
+          <input id="ra-driver" class="js-drv-ac" type="text" placeholder="พิมพ์ชื่อ หรือรหัส เช่น 53414" autocomplete="off" spellcheck="false">
           <button id="ra-btn" class="btn primary block big" type="submit">ส่งงานเปลี่ยนคนขับ</button>
         </form>
         <div id="ra-msg" class="msg" hidden></div>
@@ -98,12 +98,12 @@
         <h2>Mass re-assign (ย้ายหลายร้าน)</h2>
         <form id="mra-form" novalidate>
           <label for="mra-current">Driver ID ปัจจุบัน</label>
-          <input id="mra-current" class="js-digits" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="169624" autocomplete="off">
+          <input id="mra-current" class="js-drv-ac" type="text" placeholder="พิมพ์ชื่อ หรือรหัส เช่น 169624" autocomplete="off" spellcheck="false">
           <label>PUP ID</label>
           <div id="mra-pups" class="stack pup-fields"></div>
           <button id="mra-add" class="btn small" type="button">+ เพิ่มช่อง</button>
           <label for="mra-target">Driver ID ปลายทาง</label>
-          <input id="mra-target" class="js-digits" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="53414" autocomplete="off">
+          <input id="mra-target" class="js-drv-ac" type="text" placeholder="พิมพ์ชื่อ หรือรหัส เช่น 53414" autocomplete="off" spellcheck="false">
           <button id="mra-btn" class="btn primary block big" type="submit">ส่งงาน Mass re-assign</button>
         </form>
         <div id="mra-msg" class="msg" hidden></div>
@@ -114,7 +114,7 @@
         <p class="muted small">Disable งาน Accepted ทั้งหมดของ Driver คนนี้ ย้อนกลับไม่ได้</p>
         <form id="dis-form" novalidate>
           <label for="dis-driver">Driver ID</label>
-          <input id="dis-driver" class="js-digits" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="169624" autocomplete="off">
+          <input id="dis-driver" class="js-drv-ac" type="text" placeholder="พิมพ์ชื่อ หรือรหัส เช่น 169624" autocomplete="off" spellcheck="false">
           <button id="dis-btn" class="btn danger-solid block big" type="submit">ส่งงาน Disable</button>
         </form>
         <div id="dis-msg" class="msg" hidden></div>

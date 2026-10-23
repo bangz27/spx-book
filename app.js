@@ -106,7 +106,7 @@
     document.querySelectorAll(".tab").forEach((t) => t.classList.toggle("active", t.dataset.tab === tab));
     for (const p of ["send", "reassign", "history", "admin"]) $("page-" + p).hidden = p !== tab;
     if (tab === "history") loadHistory();
-    if (tab === "admin") { loadUsers(); renderShopAdmin(); }
+    if (tab === "admin") { loadUsers(); }
   }
   document.querySelectorAll(".tab").forEach((t) => t.addEventListener("click", () => switchTab(t.dataset.tab)));
 
@@ -716,50 +716,6 @@
     if (error) showMsg(msg, "error", esc(error.message));
     else msg.hidden = true;
     loadUsers();
-  });
-
-  // ---------- Admin: ร้าน ----------
-  function renderShopAdmin() {
-    $("shop-list").innerHTML = state.shops.map((s) => `
-      <div class="list-row">
-        <div class="grow"><b>${esc(s.name)}</b><div class="muted small">${esc(s.pup_id)}</div></div>
-        <button class="btn small" data-act="edit" data-pup="${esc(s.pup_id)}">แก้</button>
-        <button class="btn small danger" data-act="del" data-pup="${esc(s.pup_id)}">ลบ</button>
-      </div>`).join("");
-  }
-
-  $("shop-form").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const name = $("shop-name").value.trim();
-    const pup = $("shop-pup").value.trim().toUpperCase();
-    const msg = $("shop-msg");
-    if (!name || !/^[A-Z0-9]{5,40}$/.test(pup)) return showMsg(msg, "error", "กรอกชื่อร้าน และ PUP ID (อังกฤษ/ตัวเลข)");
-    const existing = state.shops.find((s) => s.pup_id === pup);
-    const sort = existing ? existing.sort_order : (Math.max(0, ...state.shops.map((s) => s.sort_order)) + 1);
-    const { error } = await sb.from("shops").upsert({ pup_id: pup, name, sort_order: sort });
-    if (error) return showMsg(msg, "error", "บันทึกไม่สำเร็จ: " + esc(error.message));
-    showMsg(msg, "ok", existing ? `แก้ไข ${esc(name)} แล้ว` : `เพิ่ม ${esc(name)} แล้ว`);
-    e.target.reset();
-    await loadShops();
-    renderShopAdmin();
-  });
-
-  $("shop-list").addEventListener("click", async (e) => {
-    const b = e.target.closest("button[data-act]");
-    if (!b) return;
-    const s = state.shops.find((x) => x.pup_id === b.dataset.pup);
-    if (!s) return;
-    if (b.dataset.act === "edit") {
-      $("shop-name").value = s.name;
-      $("shop-pup").value = s.pup_id;
-      $("shop-name").focus();
-      return;
-    }
-    if (!confirm(`ลบร้าน ${s.name} (${s.pup_id})?`)) return;
-    const { error } = await sb.from("shops").delete().eq("pup_id", s.pup_id);
-    if (error) showMsg($("shop-msg"), "error", esc(error.message));
-    await loadShops();
-    renderShopAdmin();
   });
 
   // ---------- เริ่ม ----------

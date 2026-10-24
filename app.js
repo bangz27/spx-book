@@ -106,7 +106,7 @@
     document.querySelectorAll(".tab").forEach((t) => t.classList.toggle("active", t.dataset.tab === tab));
     for (const p of ["send", "reassign", "history", "admin"]) $("page-" + p).hidden = p !== tab;
     if (tab === "history") loadHistory();
-    if (tab === "admin") { loadUsers(); }
+    if (tab === "admin") { loadUsers(); loadDirectory().then(renderShopAdmin); }
   }
   document.querySelectorAll(".tab").forEach((t) => t.addEventListener("click", () => switchTab(t.dataset.tab)));
 
@@ -716,6 +716,63 @@
     if (error) showMsg(msg, "error", esc(error.message));
     else msg.hidden = true;
     loadUsers();
+  });
+
+
+  // ---------- Admin: ร้าน (pup_directory) ----------
+  function renderShopAdmin() {
+    const list = $("shop-list");
+    if (!list) return;
+    const rows = state.dir.slice().sort((x, y) => (x.name || x.pup).localeCompare(y.name || y.pup, "th"));
+    list.innerHTML = rows.map((e) => `
+      <div class="list-row">
+        <div class="grow">
+          <b>${esc(e.name || "(ไม่มีชื่อร้าน)")}</b>
+          <div class="muted small">${esc(e.pup)}</div>
+          ${e.addr ? `<div class="muted small">${esc(e.addr)}</div>` : ""}
+        </div>
+        <button class="btn small" data-act="edit" data-pup="${esc(e.pup)}" type="button">แก้</button>
+        <button class="btn small danger" data-act="del" data-pup="${esc(e.pup)}" type="button">ลบ</button>
+      </div>`).join("") || '<p class="muted">ยังไม่มีร้านในรายการ</p>';
+  }
+
+  $("shop-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const pup = $("shop-pup").value.trim().toUpperCase();
+    const name = $("shop-name").value.trim();
+    const addr = $("shop-addr").value.trim();
+    const msg = $("shop-msg");
+    if (!/^PUP[A-Z0-9]{3,37}$/.test(pup)) return showMsg(msg, "error", "PUP ID ต้องขึ้นต้นด้วย PUP ตามด้วยตัวอักษรอังกฤษ/ตัวเลข");
+    if (!name) return showMsg(msg, "error", "กรุณากรอกชื่อร้าน");
+    const existing = state.dir.find((d) => d.pup === pup);
+    const { error } = await sb.from("pup_directory").upsert({
+      pup_id: pup, shop_name: name, address: addr || null, updated_at: new Date().toISOString(),
+    });
+    if (error) return showMsg(msg, "error", "บันทึกไม่สำเร็จ: " + esc(error.message));
+    showMsg(msg, "ok", existing ? `แก้ไข ${esc(name)} แล้ว` : `เพิ่ม ${esc(name)} แล้ว`);
+    e.target.reset();
+    await loadDirectory();
+    renderShopAdmin();
+  });
+
+  $("shop-list").addEventListener("click", async (e) => {
+    const b = e.target.closest("button[data-act]");
+    if (!b) return;
+    const s = state.dir.find((x) => x.pup === b.dataset.pup);
+    if (!s) return;
+    if (b.dataset.act === "edit") {
+      $("shop-pup").value = s.pup;
+      $("shop-name").value = s.name || "";
+      $("shop-addr").value = s.addr || "";
+      $("shop-name").focus();
+      return;
+    }
+    if (!confirm(`ลบร้าน ${s.name || s.pup} (${s.pup})?`)) return;
+    const { error } = await sb.from("pup_directory").delete().eq("pup_id", s.pup);
+    if (error) showMsg($("shop-msg"), "error", esc(error.message));
+    else $("shop-msg").hidden = true;
+    await loadDirectory();
+    renderShopAdmin();
   });
 
   // ---------- เริ่ม ----------

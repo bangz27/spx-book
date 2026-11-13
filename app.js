@@ -183,8 +183,8 @@
   const sendBtn = $("send-btn");
   function lockForm(locked) {
     sendBtn.disabled = locked;
-    for (const id of ["book-add", "driver-id"]) $(id).disabled = locked;
-    document.querySelectorAll(".book-pup, .book-del").forEach((el) => { el.disabled = locked; });
+    for (const id of ["book-add", "book-drv-add"]) $(id).disabled = locked;
+    document.querySelectorAll(".book-pup, .book-del, .book-drv, .book-drv-del").forEach((el) => { el.disabled = locked; });
   }
 
   const bookModal = $("book-modal");
@@ -211,11 +211,13 @@
     if (picked.length > 30) return showMsg(msg, "error", "เลือก PUP ได้ไม่เกิน 30 ร้านต่อครั้ง");
     state.selected = picked;
     if (!state.selected.length) return showMsg(msg, "error", "กรุณาเพิ่มร้านอย่างน้อย 1 ร้าน");
-    const driver = drvField("driver-id", msg, "Driver ID");
-    if (!driver) return;
+    const drivers = collectBookDrivers(msg);
+    if (!drivers) return;
+    state.selDrivers = drivers;
     msg.hidden = true;
     $("book-modal-count").textContent = `${state.selected.length} ร้าน`;
-    $("book-modal-driver").textContent = driver + (drvName(driver) ? " · " + drvName(driver) : "");
+    $("book-modal-driver").textContent = (drivers.length > 1 ? `(${drivers.length} คน) ` : "")
+      + drivers.map((d) => d + (drvName(d) ? " · " + drvName(d) : "")).join(", ");
     $("book-modal-list").innerHTML = state.selected.map((p) => {
       const n = shopName(p);
       return `<li>${n ? `<b>${esc(n)}</b> · ` : ""}<span class="muted">${esc(p)}</span></li>`;
@@ -247,8 +249,8 @@
   async function submitBooking() {
     if (sendBtn.disabled) return;
     const msg = $("send-msg");
-    const driver = $("driver-id").value.trim();
-    if (!state.selected.length || !/^\d+$/.test(driver)) return;
+    const drivers = state.selDrivers || [];
+    if (!state.selected.length || !drivers.length || drivers.length > 20 || !drivers.every((d) => /^\d+$/.test(d))) return;
 
     // ล็อกทันที กันกดซ้ำ
     lockForm(true);
@@ -256,7 +258,7 @@
     msg.hidden = true;
 
     // บันทึกงานลง Supabase ตรงๆ (ไม่ใช้อีเมลแล้ว) — Bot Book ดึงงาน pending ไปบุ๊คใน SPX
-    const { data: r, error } = await sb.rpc("submit_job", { p_pup_ids: state.selected, p_driver_id: driver });
+    const { data: r, error } = await sb.rpc("submit_job", { p_pup_ids: state.selected, p_driver_ids: drivers });
 
     if (!error && r && !r.duplicate) {
       sendBtn.textContent = "ส่งแล้ว ✅";
@@ -281,8 +283,8 @@
   }
 
   $("send-new").addEventListener("click", () => {
-    state.selected = [];
-    $("driver-id").value = ""; updateDrvHint($("driver-id"));
+    state.selected = []; state.selDrivers = [];
+    resetDrvRows();
     lockForm(false);
     resetBookRows();
     sendBtn.textContent = "ส่งงาน";
@@ -458,6 +460,8 @@
     return res.sort((x, y) => x[0] - y[0] || x[1].name.localeCompare(y[1].name, "th")).slice(0, 8).map((x) => x[1]);
   }
   function drvHintEl(inp) {
+    const br = inp.closest(".book-row");
+    if (br) return br.querySelector(".row-hint");
     let h = inp.nextElementSibling;
     if (!h || !h.classList.contains("drv-hint")) {
       h = document.createElement("div"); h.className = "row-hint drv-hint"; h.hidden = true;
@@ -505,6 +509,110 @@
   });
   document.addEventListener("change", (e) => { if (e.target.classList && e.target.classList.contains("js-drv-ac")) updateDrvHint(e.target); });
   document.addEventListener("reset", (e) => setTimeout(() => e.target.querySelectorAll(".js-drv-ac").forEach(updateDrvHint)));
+
+  // ---------- ช่องคนขับในหน้าส่งงาน (ช่องละ 1 คน, ได้หลายคน) ----------
+  const MAX_DRV = 20;
+  // แยกข้อความที่วางมาเป็นหลายรหัส: ลูกน้ำ / ; / ขึ้นบรรทัด / tab แยกเสมอ
+  // เว้นวรรคแยกเฉพาะเมื่อทุกส่วนเป็นตัวเลข (ชื่อคนมีเว้นวรรคได้)
+  function splitDrivers(text) {
+    const out = [];
+    for (const piece of String(text || "").split(/[,;，、\n\r\t]+/)) {
+      const t = piece.trim();
+      if (!t) continue;
+      if (/^\d+(\s+\d+)+$/.test(t)) out.push(...t.split(/\s+/));
+      else out.push(t);
+    }
+    return out;
+  }
+  function syncDrvDel() {
+    const rows = $("book-drivers").querySelectorAll(".book-row");
+    rows.forEach((r) => { r.querySelector(".book-drv-del").hidden = rows.length <= 1; });
+  }
+  function addDrvRow(value = "", after = null) {
+    const row = document.createElement("div");
+    row.className = "book-row";
+    row.innerHTML = `<div class="row pup-row">
+        <input type="text" class="book-drv js-drv-ac" placeholder="พิมพ์ชื่อหรือรหัสพนักงาน" autocomplete="off" spellcheck="false">
+        <button type="button" class="btn small danger book-del book-drv-del" aria-label="ลบช่อง">ลบ</button>
+      </div><div class="row-hint drv-hint" hidden></div>`;
+    const inp = row.querySelector("input");
+    inp.value = value;
+    if (after && after.parentNode) after.insertAdjacentElement("afterend", row);
+    else $("book-drivers").appendChild(row);
+    syncDrvDel();
+    updateDrvHint(inp);
+    return inp;
+  }
+  function resetDrvRows() { $("book-drivers").innerHTML = ""; addDrvRow(); }
+  // ใส่หลายรหัสลงหลายช่อง: ช่องแรกใช้ช่องเดิม ที่เหลือเพิ่มช่องใหม่ต่อท้าย ตัดตัวซ้ำ
+  function spreadDrivers(inp, tokens) {
+    const others = [...document.querySelectorAll(".book-drv")].filter((x) => x !== inp).map((x) => x.value.trim()).filter(Boolean);
+    const seen = new Set(others), list = [];
+    for (const t of tokens) if (!seen.has(t)) { seen.add(t); list.push(t); }
+    const room = MAX_DRV - others.length;
+    if (list.length > room) showMsg($("send-msg"), "error", `ใส่คนขับได้ไม่เกิน ${MAX_DRV} คนต่องาน (ตัดส่วนเกินออกแล้ว)`);
+    const keep = list.slice(0, Math.max(room, 0));
+    inp.value = keep[0] || "";
+    updateDrvHint(inp);
+    let last = inp.closest(".book-row");
+    for (const t of keep.slice(1)) { const ni = addDrvRow(t, last); last = ni.closest(".book-row"); }
+  }
+  resetDrvRows();
+  $("book-drv-add").addEventListener("click", () => {
+    if ($("book-drivers").children.length >= MAX_DRV) return showMsg($("send-msg"), "error", `ใส่คนขับได้ไม่เกิน ${MAX_DRV} คนต่องาน`);
+    addDrvRow().focus();
+  });
+  $("book-drivers").addEventListener("click", (e) => {
+    if (!e.target.classList.contains("book-drv-del") || sendBtn.disabled) return;
+    if ($("book-drivers").children.length <= 1) return;
+    e.target.closest(".book-row").remove();
+    syncDrvDel();
+  });
+  $("book-drivers").addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && e.target.classList.contains("book-drv")) { e.preventDefault(); $("book-drv-add").click(); }
+  });
+  $("book-drivers").addEventListener("paste", (e) => {
+    const inp = e.target;
+    if (!inp.classList || !inp.classList.contains("book-drv")) return;
+    const text = (e.clipboardData || window.clipboardData)?.getData("text") || "";
+    const tokens = splitDrivers(text);
+    if (tokens.length <= 1) return; // วางรหัสเดียว: ปล่อยให้เบราว์เซอร์จัดการเอง
+    e.preventDefault();
+    acClose();
+    spreadDrivers(inp, tokens);
+  });
+  // พิมพ์หลายรหัสในช่องเดียว (เช่น 111,222) → แยกเป็นหลายช่องตอนออกจากช่อง
+  $("book-drivers").addEventListener("change", (e) => {
+    const inp = e.target;
+    if (!inp.classList || !inp.classList.contains("book-drv")) return;
+    const tokens = splitDrivers(inp.value);
+    if (tokens.length > 1) spreadDrivers(inp, tokens);
+  });
+  // อ่านทุกช่องคนขับ: ข้ามช่องว่าง, แยกหลายรหัส, แปลงชื่อเป็นรหัส, ตัดซ้ำ (คงลำดับ), ตัวเลขเท่านั้น, ไม่เกิน 20
+  function collectBookDrivers(msg) {
+    const inputs = [...document.querySelectorAll(".book-drv")];
+    for (const inp of inputs) { const t = splitDrivers(inp.value); if (t.length > 1) spreadDrivers(inp, t); }
+    const all = [...document.querySelectorAll(".book-drv")], codes = [];
+    for (let i = 0; i < all.length; i++) {
+      const inp = all[i];
+      if (!inp.value.trim()) continue;
+      const r = resolveDriver(inp.value);
+      if (!r.code) {
+        showMsg(msg, "error", `คนขับช่องที่ ${i + 1}: ${esc(r.err)}`);
+        inp.focus();
+        if (r.many) inp.dispatchEvent(new Event("input", { bubbles: true }));
+        return null;
+      }
+      if (!/^\d+$/.test(r.code)) { showMsg(msg, "error", "Driver ID ต้องเป็นตัวเลขเท่านั้น"); inp.focus(); return null; }
+      if (codes.includes(r.code)) { inp.closest(".book-row").remove(); continue; } // ซ้ำ: ลบช่องนี้ทิ้ง
+      inp.value = r.code; updateDrvHint(inp);
+      codes.push(r.code);
+    }
+    syncDrvDel();
+    if (!codes.length) { showMsg(msg, "error", "กรุณากรอก Driver ID อย่างน้อย 1 คน"); (all[0] || $("book-drv-add")).focus(); return null; }
+    if (codes.length > MAX_DRV) { showMsg(msg, "error", `ใส่คนขับได้ไม่เกิน ${MAX_DRV} คนต่องาน`); return null; }
+    return codes;
+  }
 
   // ---------- เปลี่ยนคนขับ ----------
   const PUP_RE = /^PUP[A-Z0-9]{3,37}$/;
@@ -637,7 +745,7 @@
     const list = $("history-list");
     list.innerHTML = '<p class="muted">กำลังโหลด…</p>';
     let hq = sb.from("jobs")
-      .select("id,pup_ids,shop_names,driver_id,sender_email,created_at,status,note,error,job_type,payload");
+      .select("id,pup_ids,shop_names,driver_id,driver_ids,sender_email,created_at,status,note,error,job_type,payload");
     if (!state.isAdmin) hq = hq.eq("sender_email", state.email);
     const { data, error } = await hq
       .gte("created_at", todayStartIso())
@@ -652,7 +760,8 @@
       if (j.job_type === "mass_reassign") return `<span>Driver <b>${esc(p.current_driver_id || "?")}</b> → <b>${esc(p.target_driver_id || j.driver_id)}</b></span>`;
       if (j.job_type === "disable") return `<span>Disable Driver <b>${esc(p.driver_id || j.driver_id)}</b></span>`;
       if (j.job_type === "reassign") return `<span>Driver ใหม่ <b>${esc(p.new_driver_id || j.driver_id)}</b></span>`;
-      return `<span>Driver <b>${esc(j.driver_id)}</b></span>`;
+      const ids = (Array.isArray(j.driver_ids) && j.driver_ids.length) ? j.driver_ids : (j.driver_id ? [j.driver_id] : []);
+      return `<span>Driver${ids.length > 1 ? ` (${ids.length} คน)` : ""} ${ids.map((d) => `<b>${esc(d)}</b>`).join(", ") || "<b>?</b>"}</span>`;
     };
     const label = { pending: "รอบุ๊ค", processing: "กำลังบุ๊ค", done: "บุ๊คแล้ว", failed: "บุ๊คไม่สำเร็จ", sent: "ส่งแล้ว", test: "ทดสอบ" };
     list.innerHTML = data.map((j) => `

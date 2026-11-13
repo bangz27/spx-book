@@ -73,8 +73,10 @@
         <button id="book-add" class="btn add-btn block" type="button">＋ เพิ่มช่อง</button>
         <p class="muted small hint">พิมพ์ชื่อร้านหรือ PUP ID แล้วแตะเลือกจากรายการ · ช่องที่ว่างจะถูกข้าม</p>
 
-        <label for="driver-id">Driver ID</label>
-        <input id="driver-id" class="js-drv-ac" type="text" placeholder="พิมพ์ชื่อหรือรหัสพนักงาน" autocomplete="off" spellcheck="false">
+        <label>คนขับ (ช่องละ 1 คน)</label>
+        <div id="book-drivers" class="stack pup-fields"></div>
+        <button id="book-drv-add" class="btn add-btn block" type="button">＋ เพิ่มคนขับ</button>
+        <p class="muted small hint">พิมพ์ชื่อหรือรหัสพนักงาน · วางหลายรหัสคั่นด้วยลูกน้ำ เว้นวรรค หรือขึ้นบรรทัดใหม่ได้ · สูงสุด 20 คน</p>
 
         <button id="send-btn" class="btn primary block big" type="button">ส่งงาน</button>
         <div id="send-msg" class="msg" hidden></div>

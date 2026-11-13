@@ -1,7 +1,7 @@
 // SPX Book service worker
-const CACHE = 'spx-book-v21';
+const CACHE = 'spx-book-v22';
 const SHELL = [
-  './', './index.html', './style.css', './app.js', './config.js', './pwa.js', './donate.js', './theme.js', './img/promptpay.jpg', './sounds/success.mp3', './fonts/EkkamaiVibe-Regular.woff2', './fonts/EkkamaiVibe-Bold.woff2', './fonts/EkkamaiVibe-Heavy.woff2',
+  './', './index.html', './style.css?v=22', './app.js?v=22', './config.js', './pwa.js', './donate.js', './theme.js', './img/promptpay.jpg', './sounds/success.mp3', './fonts/EkkamaiVibe-Regular.woff2', './fonts/EkkamaiVibe-Bold.woff2', './fonts/EkkamaiVibe-Heavy.woff2',
   './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png',
   './icons/icon-maskable-512.png', './icons/apple-touch-icon.png'
@@ -30,7 +30,7 @@ self.addEventListener('fetch', (e) => {
   const networkFirst = req.mode === 'navigate' || /\.(html|js)$/.test(url.pathname) || url.pathname.endsWith('/');
   if (networkFirst) {
     e.respondWith(
-      fetch(req).then((res) => {
+      fetch(req, { cache: 'no-cache' }).then((res) => {   // revalidate (ETag) so HTML/JS never mix versions from HTTP cache
         if (res.ok) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(req, copy)); }
         return res;
       }).catch(() => caches.match(req).then((r) => r || (req.mode === 'navigate' ? caches.match('./index.html') : undefined)))

@@ -8,6 +8,14 @@
   });
 
   const $ = (id) => document.getElementById(id);
+  // index.html เก่าค้างใน cache แต่ได้ app.js ใหม่ → โหลดหน้าใหม่ (ข้าม cache) ครั้งเดียว กันหน้าพังครึ่งๆ
+  if (!$("book-drivers")) {
+    if (!sessionStorage.getItem("spxbook.htmlReload")) {
+      sessionStorage.setItem("spxbook.htmlReload", "1");
+      location.replace(location.pathname + "?r=" + Date.now());
+      return;
+    }
+  } else sessionStorage.removeItem("spxbook.htmlReload");
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 

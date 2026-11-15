@@ -397,8 +397,8 @@
   function acPosition() {
     if (!acInput) return;
     const r = acInput.getBoundingClientRect();
-    acBox.style.left = (r.left + window.scrollX) + "px";
-    acBox.style.top = (r.bottom + window.scrollY + 4) + "px";
+    acBox.style.left = r.left + "px";
+    acBox.style.top = (r.bottom + 4) + "px";
     acBox.style.width = r.width + "px";
   }
   function acRender() {
@@ -438,14 +438,42 @@
     } else if (e.key === "Enter" && acIdx >= 0) { e.preventDefault(); e.stopImmediatePropagation(); acPick(acIdx); }
     else if (e.key === "Escape") acClose();
   }, true);
+  // กันคลิกหลุดหลังเลือกจากรายการ: pointerdown เลือกและปิดรายการแล้ว
+  // คลิกที่ตามมา (โดยเฉพาะบน Android) ไปโดนปุ่ม "เพิ่มช่อง" ที่อยู่ข้างใต้
+  let acGuardUntil = 0, acGuardX = 0, acGuardY = 0;
+  function acArmGuard(x, y) {
+    acGuardUntil = performance.now() + 400;
+    acGuardX = x; acGuardY = y;
+  }
   acBox.addEventListener("pointerdown", (e) => {
     const it = e.target.closest(".ac-item");
     if (!it) return;
     e.preventDefault();
+    e.stopPropagation();
+    acArmGuard(e.clientX, e.clientY);
     acPick(+it.dataset.i);
   });
-  document.addEventListener("focusout", (e) => { if (e.target === acInput) setTimeout(acClose, 150); });
+  document.addEventListener("click", (e) => {
+    if (performance.now() >= acGuardUntil) return;
+    const dx = e.clientX - acGuardX, dy = e.clientY - acGuardY;
+    if (dx * dx + dy * dy > 48 * 48) return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+  }, true);
+  document.addEventListener("focusout", (e) => {
+    if (e.target !== acInput) return;
+    setTimeout(() => {
+      if (document.activeElement === acInput) return;
+      acClose();
+    }, 300);
+  });
   window.addEventListener("resize", acPosition);
+  window.addEventListener("scroll", acPosition, true);
+  if (window.visualViewport) {
+    visualViewport.addEventListener("resize", acPosition);
+    visualViewport.addEventListener("scroll", acPosition);
+  }
 
   // ---------- Autocomplete คนขับ (ชื่อ / รหัสพนักงาน) ----------
   state.drivers = [];

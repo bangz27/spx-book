@@ -162,9 +162,9 @@ body.modal-open { overflow: hidden; }
 .type-tag.disable { background: #b42318; color: #fff; }
 
 /* Autocomplete ร้าน */
-.ac-box { position: absolute; z-index: 90; max-height: 50vh; overflow-y: auto; background: var(--card); border: 1px solid var(--line); border-top: 3px solid var(--brand); border-radius: 14px; box-shadow: 0 12px 32px rgba(0,0,0,.18); }
+.ac-box { position: fixed; z-index: 90; max-height: 50vh; overflow-y: auto; background: var(--card); border: 1px solid var(--line); border-top: 3px solid var(--brand); border-radius: 14px; box-shadow: 0 12px 32px rgba(0,0,0,.18); }
 .ac-box[hidden] { display: none; }
-.ac-item { padding: 9px 12px; border-bottom: 1px solid var(--line); cursor: pointer; }
+.ac-item { padding: 9px 12px; border-bottom: 1px solid var(--line); cursor: pointer; touch-action: manipulation; }
 .ac-item:last-child { border-bottom: 0; }
 .ac-item.active, .ac-item:hover { background: var(--warn-bg); }
 .ac-name { font-size: 12.5px; }

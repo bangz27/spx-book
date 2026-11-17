@@ -1,7 +1,7 @@
 // SPX Book service worker
-const CACHE = 'spx-book-v23';
+const CACHE = 'spx-book-v24';
 const SHELL = [
-  './', './index.html', './style.css?v=23', './app.js?v=23', './config.js', './pwa.js', './donate.js', './theme.js', './img/promptpay.jpg', './sounds/success.mp3', './fonts/EkkamaiVibe-Regular.woff2', './fonts/EkkamaiVibe-Bold.woff2', './fonts/EkkamaiVibe-Heavy.woff2',
+  './', './index.html', './style.css?v=24', './app.js?v=24', './config.js', './pwa.js', './donate.js', './theme.js', './img/promptpay.jpg', './sounds/success.mp3', './fonts/EkkamaiVibe-Regular.woff2', './fonts/EkkamaiVibe-Bold.woff2', './fonts/EkkamaiVibe-Heavy.woff2',
   './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png',
   './icons/icon-maskable-512.png', './icons/apple-touch-icon.png'

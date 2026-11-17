@@ -181,6 +181,21 @@ body.modal-open { overflow: hidden; }
 /* บุ๊คงาน: popup ยืนยัน */
 .hint { margin: 8px 0 4px; }
 .book-modal-tip { background: var(--warn-bg); color: var(--warn); border-radius: 12px; padding: 10px 12px; font-weight: 600; }
+/* ประกาศเวลาบุ๊คงาน */
+.book-time-notice {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  background: var(--err-bg);
+  color: var(--err);
+  border: 2px solid var(--ink);
+  border-radius: 12px;
+  font-weight: 700;
+  line-height: 1.55;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  box-shadow: 2px 2px 0 rgba(74, 64, 58, .12);
+}
 .book-modal-sum { font-size: 12.5px; margin: 4px 0 6px; }
 .book-modal-list { text-align: left; max-height: 38vh; overflow-y: auto; margin: 0 0 4px; padding-left: 26px; font-size: 12.5px; }
 .book-modal-list li { padding: 4px 0; border-bottom: 1px solid var(--line); }

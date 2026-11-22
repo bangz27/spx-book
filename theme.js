@@ -1,8 +1,8 @@
-// Theme: page title + Wallie chrome (no booking / RPC logic here)
+// Theme: page title + tracking-app chrome (no booking / write-RPC logic here)
 (function () {
   var titles = { home: "หน้าหลัก", send: "ส่งงาน", reassign: "เปลี่ยนคนขับ", history: "ประวัติวันนี้", admin: "Admin" };
   var meta = document.querySelector('meta[name="theme-color"]');
-  var GREEN = "#2DC86A";
+  var BG = "#F6F5F3";
 
   function sync() {
     var t = document.querySelector(".tab.active");
@@ -10,9 +10,7 @@
     document.body.dataset.tab = k;
     var h = document.getElementById("page-title");
     if (h) h.textContent = titles[k] || "";
-    var loginOpen = document.getElementById("view-login") && !document.getElementById("view-login").hidden;
-    var deniedOpen = document.getElementById("view-denied") && !document.getElementById("view-denied").hidden;
-    if (meta) meta.setAttribute("content", (loginOpen || deniedOpen) ? GREEN : "#F5F7F6");
+    if (meta) meta.setAttribute("content", BG);
     document.querySelectorAll(".tab").forEach(function (b) {
       b.setAttribute("aria-selected", b.classList.contains("active") ? "true" : "false");
       b.setAttribute("role", "tab");
@@ -32,7 +30,7 @@
   var adminTab = document.getElementById("tab-admin");
   if (adminTab) new MutationObserver(sync).observe(adminTab, { attributes: true, attributeFilter: ["hidden"] });
 
-  document.querySelectorAll(".feature-tile[data-nav]").forEach(function (btn) {
+  document.querySelectorAll("[data-nav]").forEach(function (btn) {
     btn.addEventListener("click", function () {
       var tab = btn.getAttribute("data-nav");
       var jump = btn.getAttribute("data-jump");

@@ -3,20 +3,20 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#2DC86A">
+  <meta name="theme-color" content="#F6F5F3">
   <title>SPX Book</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="SPX Book">
   <link rel="preload" href="fonts/EkkamaiVibe-Regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="fonts/EkkamaiVibe-Heavy.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Mitr:wght@500;600&family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=26">
+  <link rel="stylesheet" href="style.css?v=27">
 </head>
 <body>
   <!-- กำลังโหลด -->
@@ -56,16 +56,34 @@
   <!-- แอปหลัก -->
   <div id="view-app" hidden>
     <header class="topbar">
+      <button class="round-icon" type="button" data-nav="home" aria-label="หน้าหลัก" title="หน้าหลัก">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8.5 12 3l9 5.5V20a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg>
+      </button>
       <div class="greet">
         <p class="hello">สวัสดี</p>
         <span id="who-email"></span>
+        <h1 id="page-title" class="page-title">หน้าหลัก</h1>
       </div>
       <div class="who">
-        <button id="sound-toggle" class="icon-btn" type="button" aria-pressed="true" title="เสียงแจ้งเตือนเมื่องานสำเร็จ">🔔</button>
-        <button id="sound-test" class="icon-btn small-txt" type="button" title="ทดสอบเสียง">▶ ทดสอบ</button>
-        <button class="link js-logout" type="button">ออก</button>
+        <button id="sound-test" class="icon-btn icon-only" type="button" title="ทดสอบเสียง" aria-label="ทดสอบเสียง">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10v4h3l5 4V6L6 10H3zM16.5 12a3.5 3.5 0 0 0-1.8-3M19 12a6 6 0 0 0-3-5.2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button id="sound-toggle" class="icon-btn bell-btn" type="button" aria-pressed="true" title="เสียงแจ้งเตือนเมื่องานสำเร็จ" aria-label="เสียงแจ้งเตือนเมื่องานสำเร็จ">
+          <svg class="bell-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M15.5 17.5a3.5 3.5 0 0 1-7 0M6 9.5a6 6 0 1 1 12 0c0 4 1.5 5.5 1.5 5.5H4.5S6 13.5 6 9.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <svg class="bell-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M15.5 17.5a3.5 3.5 0 0 1-7 0M6 9.5a6 6 0 1 1 12 0c0 4 1.5 5.5 1.5 5.5H4.5S6 13.5 6 9.5zM4 4l16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+        <button class="icon-btn icon-only js-logout" type="button" title="ออกจากระบบ" aria-label="ออกจากระบบ">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 7V5a1 1 0 0 1 1-1h8v16h-8a1 1 0 0 1-1-1v-2M3 12h11M11 8l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
       </div>
-      <h1 id="page-title" class="page-title">หน้าหลัก</h1>
+      <div class="search-row">
+        <label class="visually-hidden" for="app-search">ค้นหางานหรือร้านวันนี้</label>
+        <input id="app-search" type="search" placeholder="ค้นหางานหรือร้านวันนี้" autocomplete="off" enterkeyhint="search">
+        <button id="app-search-btn" class="search-go" type="button" aria-label="ค้นหา">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/></svg>
+        </button>
+      </div>
+      <div id="search-shops" class="search-shops" hidden></div>
     </header>
 
     <!-- หน้าหลัก -->
@@ -76,16 +94,31 @@
         <p class="hero-open">เปิดรับงานแล้ว</p>
         <p class="hero-note">บุ๊ค / เปลี่ยนคนขับ / ย้ายหลายร้าน / Disable — ก่อนเวลาให้แจ้งบังส่วนตัว</p>
       </div>
-      <h2 class="section-label">เมนู</h2>
-      <div class="feature-grid" role="navigation" aria-label="เมนูหลัก">
-        <button class="feature-tile tile-send" type="button" data-nav="send">
-          <span class="tile-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 7.5 12 3l9 4.5v9L12 21l-9-4.5z"/><path d="M3 7.5 12 12l9-4.5M12 12v9"/></svg></span>
-          <span class="tile-label">ส่งงาน</span>
+      <div class="action-pair" role="navigation" aria-label="งานหลัก">
+        <button class="action-card" type="button" data-nav="send">
+          <span class="action-title">ส่งงานบุ๊ค</span>
+          <svg class="illu illu-truck" viewBox="0 0 96 72" aria-hidden="true">
+            <rect x="8" y="22" width="44" height="28" rx="5" fill="#F2784B"/>
+            <rect x="52" y="30" width="30" height="20" rx="4" fill="#1A1A1A"/>
+            <rect x="58" y="34" width="16" height="10" rx="2" fill="#F6F5F3"/>
+            <circle cx="26" cy="56" r="8" fill="#1A1A1A"/>
+            <circle cx="26" cy="56" r="3.2" fill="#F6F5F3"/>
+            <circle cx="70" cy="56" r="8" fill="#1A1A1A"/>
+            <circle cx="70" cy="56" r="3.2" fill="#F6F5F3"/>
+            <rect x="14" y="10" width="16" height="14" rx="2" fill="#E8A070"/>
+            <rect x="28" y="6" width="16" height="18" rx="2" fill="#FFD2C0"/>
+          </svg>
         </button>
-        <button class="feature-tile tile-reassign" type="button" data-nav="reassign" data-jump="#ra-form">
-          <span class="tile-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg></span>
-          <span class="tile-label">เปลี่ยนคนขับ</span>
+        <button class="action-card" type="button" data-nav="reassign" data-jump="#ra-form">
+          <span class="action-title">เปลี่ยนคนขับ</span>
+          <svg class="illu illu-box" viewBox="0 0 96 72" aria-hidden="true">
+            <path d="M16 28 48 14 80 28v26L48 68 16 54Z" fill="#E8A070"/>
+            <path d="M16 28 48 42 80 28" fill="#F3C4A6"/>
+            <path d="M48 14v54M16 28l32 14 32-14" fill="none" stroke="#1A1A1A" stroke-width="1.6"/>
+          </svg>
         </button>
+      </div>
+      <div class="feature-grid" role="navigation" aria-label="เมนูเพิ่มเติม">
         <button class="feature-tile tile-mass" type="button" data-nav="reassign" data-jump="#mra-form">
           <span class="tile-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="7" height="7" rx="1.5"/><rect x="14" y="4" width="7" height="7" rx="1.5"/><rect x="3" y="13" width="7" height="7" rx="1.5"/><path d="M14 16.5h7M17.5 13v7"/></svg></span>
           <span class="tile-label">ย้ายหลายร้าน</span>
@@ -94,15 +127,16 @@
           <span class="tile-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></svg></span>
           <span class="tile-label">Disable</span>
         </button>
-        <button class="feature-tile tile-history" type="button" data-nav="history">
-          <span class="tile-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
-          <span class="tile-label">ประวัติ</span>
-        </button>
         <button class="feature-tile tile-admin" type="button" data-nav="admin" hidden>
           <span class="tile-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></span>
           <span class="tile-label">Admin</span>
         </button>
       </div>
+      <div class="section-head">
+        <h2>งานวันนี้</h2>
+        <button class="see-all" type="button" data-nav="history">ดูทั้งหมด</button>
+      </div>
+      <div id="home-recent"></div>
     </section>
 
     <!-- ส่งงาน -->
@@ -173,10 +207,14 @@
         <h2>งานที่ส่งวันนี้ <span id="history-count" class="pill"></span></h2>
         <button id="history-refresh" class="btn small" type="button">รีเฟรช</button>
       </div>
-      <p class="history-group">วันนี้</p>
-      <div class="history-card">
-        <div id="history-list"></div>
+      <div id="hist-filters" class="filter-chips" role="tablist" aria-label="กรองสถานะงาน">
+        <button type="button" class="chip-filter active" data-filter="all" aria-selected="true">ทั้งหมด</button>
+        <button type="button" class="chip-filter" data-filter="active" aria-selected="false">กำลังทำ</button>
+        <button type="button" class="chip-filter" data-filter="done" aria-selected="false">เสร็จ</button>
+        <button type="button" class="chip-filter" data-filter="failed" aria-selected="false">ล้มเหลว</button>
       </div>
+      <p class="history-group">วันนี้</p>
+      <div id="history-list"></div>
     </section>
 
     <!-- Admin -->
@@ -217,17 +255,17 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1z"/></svg>
         <span class="tab-label">หลัก</span>
       </button>
-      <button class="tab" data-tab="reassign" type="button" aria-label="เปลี่ยนคนขับ" title="เปลี่ยนคนขับ">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg>
-        <span class="tab-label">ย้ายงาน</span>
+      <button class="tab" data-tab="history" type="button" aria-label="ประวัติวันนี้" title="ประวัติวันนี้">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v12H4zM8 7V5h8v2"/><path d="M8 12h8M8 16h5"/></svg>
+        <span class="tab-label">ประวัติ</span>
       </button>
       <button class="tab tab-fab" data-tab="send" type="button" aria-label="ส่งงาน" title="ส่งงาน">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-        <span class="tab-label">ส่งงาน</span>
+        <span class="tab-label visually-hidden">ส่งงาน</span>
       </button>
-      <button class="tab" data-tab="history" type="button" aria-label="ประวัติวันนี้" title="ประวัติวันนี้">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
-        <span class="tab-label">ประวัติ</span>
+      <button class="tab" data-tab="reassign" type="button" aria-label="เปลี่ยนคนขับ" title="เปลี่ยนคนขับ">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg>
+        <span class="tab-label">ย้ายงาน</span>
       </button>
       <button class="tab" data-tab="admin" type="button" id="tab-admin" aria-label="Admin" title="Admin" hidden>
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
@@ -293,7 +331,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=26"></script>
+  <script src="app.js?v=27"></script>
   <script src="pwa.js"></script>
   <script src="donate.js"></script>
   <script src="theme.js"></script>

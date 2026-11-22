@@ -19,7 +19,7 @@
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-  const state = { email: "", isAdmin: false, selected: [], view: "" };
+  const state = { email: "", isAdmin: false, selected: [], view: "", todayJobs: [], histFilter: "all" };
 
   // ---------- helpers ----------
   function showView(name) {
@@ -32,7 +32,10 @@
     el.hidden = !html;
   }
   function bkkTime(ts) {
-    return new Date(ts).toLocaleTimeString("th-TH", {
+    if (!ts) return "—";
+    const d = new Date(ts);
+    if (Number.isNaN(d.getTime())) return "—";
+    return d.toLocaleTimeString("th-TH", {
       timeZone: "Asia/Bangkok", hour: "2-digit", minute: "2-digit", hour12: false,
     });
   }
@@ -138,6 +141,7 @@
     loadDrivers();
     syncBookCutoff();
     switchTab("home");
+    loadHistory();
     startWatch();
   }
 
@@ -339,9 +343,9 @@
   let audioUnlocked = false;
   function renderSoundBtn() {
     const b = $("sound-toggle");
-    b.textContent = soundOn ? "🔔" : "🔕";
     b.setAttribute("aria-pressed", String(soundOn));
     b.title = soundOn ? "เสียงเปิดอยู่ (กดเพื่อปิด)" : "เสียงปิดอยู่ (กดเพื่อเปิด)";
+    b.setAttribute("aria-label", b.title);
     $("sound-test").hidden = !soundOn;
   }
   function playSuccess(force) {
@@ -384,7 +388,7 @@
     }
     watchSeeded = true;
     if (newlyDone) playSuccess(false);
-    if (changed && !$("page-history").hidden) loadHistory();
+    if (changed) loadHistory();
   }
   function startWatch() {
     known.clear(); watchSeeded = false;
@@ -818,43 +822,176 @@
   });
 
   // ---------- ประวัติวันนี้ ----------
+  const typeLabel = { book: "บุ๊คงาน", reassign: "เปลี่ยนคนขับ", mass_reassign: "Mass re-assign", disable: "Disable" };
+  const statusLabel = { pending: "รอบุ๊ค", processing: "กำลังบุ๊ค", done: "บุ๊คแล้ว", failed: "บุ๊คไม่สำเร็จ", sent: "ส่งแล้ว", test: "ทดสอบ" };
+  const jobThumb = {
+    book: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8.5 12 4l8 4.5v9L12 22l-8-4.5z" fill="#E8A070" stroke="#1A1A1A" stroke-width="1.2"/><path d="M12 4v18M4 8.5l8 4.5 8-4.5" fill="none" stroke="#1A1A1A" stroke-width="1.2"/></svg>`,
+    reassign: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h13l-3-3M20 16H7l3 3" fill="none" stroke="#1A1A1A" stroke-width="1.8" stroke-linecap="round"/></svg>`,
+    mass_reassign: `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="7" height="7" rx="1.4" fill="none" stroke="#1A1A1A" stroke-width="1.6"/><rect x="14" y="4" width="7" height="7" rx="1.4" fill="none" stroke="#1A1A1A" stroke-width="1.6"/><path d="M14 16.5h7M17.5 13v7" fill="none" stroke="#1A1A1A" stroke-width="1.6" stroke-linecap="round"/></svg>`,
+    disable: `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="#C04545" stroke-width="1.6"/><path d="M8 12h8" stroke="#C04545" stroke-width="1.6" stroke-linecap="round"/></svg>`,
+  };
+  function jobShops(j) {
+    const names = (j.pup_ids || []).map((p, i) => shopName(p) || (j.shop_names || [])[i] || p).filter(Boolean);
+    return names.join(", ") || "—";
+  }
+  function driverLine(j) {
+    const p = j.payload || {};
+    if (j.job_type === "mass_reassign") return `<span>Driver <b>${esc(p.current_driver_id || "?")}</b> → <b>${esc(p.target_driver_id || j.driver_id)}</b></span>`;
+    if (j.job_type === "disable") return `<span>Disable Driver <b>${esc(p.driver_id || j.driver_id)}</b></span>`;
+    if (j.job_type === "reassign") return `<span>Driver ใหม่ <b>${esc(p.new_driver_id || j.driver_id)}</b></span>`;
+    const ids = (Array.isArray(j.driver_ids) && j.driver_ids.length) ? j.driver_ids : (j.driver_id ? [j.driver_id] : []);
+    return `<span>Driver${ids.length > 1 ? ` (${ids.length} คน)` : ""} ${ids.map((d) => `<b>${esc(d)}</b>`).join(", ") || "<b>?</b>"}</span>`;
+  }
+  function jobSearchText(j) {
+    const p = j.payload || {};
+    return [
+      j.job_code, j.id, jobShops(j), (j.pup_ids || []).join(" "), j.status, statusLabel[j.status],
+      j.job_type, typeLabel[j.job_type], j.driver_id, (j.driver_ids || []).join(" "),
+      p.current_driver_id, p.target_driver_id, p.new_driver_id, p.driver_id,
+      j.sender_email, j.note, j.error,
+    ].map((x) => String(x || "")).join(" ").toLowerCase();
+  }
+  function filterTodayJobs() {
+    const q = (($("app-search") && $("app-search").value) || "").trim().toLowerCase();
+    const f = state.histFilter || "all";
+    return (state.todayJobs || []).filter((j) => {
+      if (q && !jobSearchText(j).includes(q)) return false;
+      if (f === "active") return j.status === "pending" || j.status === "processing";
+      if (f === "done") return j.status === "done" || j.status === "sent";
+      if (f === "failed") return j.status === "failed";
+      return true;
+    });
+  }
+  function shipTrackHtml(j) {
+    const st = j.status;
+    let s1 = "done", s2 = "", s3 = "", r1 = "done", r2 = "";
+    if (st === "processing") { s2 = "current"; }
+    else if (st === "done" || st === "sent") { s2 = "done"; r2 = "done"; s3 = "done"; }
+    else if (st === "failed") { s2 = "done"; r2 = "done"; s3 = "fail"; }
+    else { s2 = "current"; } // pending / test
+    const last = st === "failed" ? "ล้มเหลว" : "เสร็จ";
+    return `<div class="ship-track" data-status="${esc(st || "")}">
+      <div class="track-line" aria-hidden="true">
+        <span class="step ${s1}"></span><span class="rail ${r1}"></span>
+        <span class="step ${s2}"></span><span class="rail ${r2}"></span>
+        <span class="step ${s3}"></span>
+      </div>
+      <div class="track-times">
+        <span><b>ส่งแล้ว</b>${esc(bkkTime(j.created_at))}</span>
+        <span><b>บอทรับงาน</b>—</span>
+        <span><b>${esc(last)}</b>—</span>
+      </div>
+    </div>`;
+  }
+  function jobCardHtml(j) {
+    const typ = j.job_type || "book";
+    const code = j.job_code || j.id || "—";
+    const shops = jobShops(j);
+    const pups = (j.pup_ids || []).join(", ") || "—";
+    return `<div class="card job" data-status="${esc(j.status || "")}" data-type="${esc(typ)}">
+      <div class="job-head">
+        <div class="job-thumb">${jobThumb[typ] || jobThumb.book}</div>
+        <div class="job-id-wrap">
+          <div class="job-id">ID: ${esc(code)}</div>
+          <div class="job-shops">${esc(shops)}</div>
+          <div class="job-pups">${esc(pups)}</div>
+        </div>
+        <span class="type-tag ${esc(typ)}">${esc(typeLabel[typ] || "บุ๊คงาน")}</span>
+        <span class="badge ${esc(j.status)}">${esc(statusLabel[j.status] || j.status || "—")}</span>
+      </div>
+      ${shipTrackHtml(j)}
+      <div class="job-meta">${driverLine(j)}${state.isAdmin ? `<span class="small">ขอโดย <b>${esc(j.sender_email || "—")}</b></span>` : ""}</div>
+      ${(j.note || j.error) ? `<div class="muted small">${esc(j.error || j.note)}</div>` : ""}
+    </div>`;
+  }
+  function syncBellDot() {
+    const btn = $("sound-toggle");
+    if (!btn) return;
+    const active = (state.todayJobs || []).some((j) => j.status === "pending" || j.status === "processing");
+    btn.classList.toggle("has-dot", active);
+  }
+  function renderShopSearch() {
+    const box = $("search-shops");
+    if (!box) return;
+    const q = (($("app-search") && $("app-search").value) || "").trim().toLowerCase();
+    if (!q) { box.hidden = true; box.innerHTML = ""; return; }
+    const hits = (state.dir || []).filter((e) => {
+      const label = `${e.pup || ""} ${e.name || ""} ${e.nick || ""} ${e.addr || ""}`.toLowerCase();
+      return label.includes(q);
+    }).slice(0, 8);
+    if (!hits.length) { box.hidden = true; box.innerHTML = ""; return; }
+    box.hidden = false;
+    box.innerHTML = hits.map((e) => `<div class="ac-item">
+      <div class="ac-name"><b>${esc(formatShopLabel(e.name, e.nick) || "—")}</b></div>
+      <div class="ac-pup">${esc(e.pup || "—")}</div>
+    </div>`).join("");
+  }
+  function renderHistoryLists() {
+    const filtered = filterTodayJobs();
+    if ($("history-count")) $("history-count").textContent = String((state.todayJobs || []).length);
+    const empty = '<p class="muted">วันนี้ยังไม่มีงาน</p>';
+    const none = '<p class="muted">ไม่พบงานที่ตรงกับตัวกรอง</p>';
+    const list = $("history-list");
+    if (list) {
+      if (!(state.todayJobs || []).length) list.innerHTML = empty;
+      else if (!filtered.length) list.innerHTML = none;
+      else list.innerHTML = filtered.map(jobCardHtml).join("");
+    }
+    const home = $("home-recent");
+    if (home) {
+      if (!(state.todayJobs || []).length) home.innerHTML = empty;
+      else if (!filtered.length) home.innerHTML = none;
+      else home.innerHTML = filtered.slice(0, 2).map(jobCardHtml).join("");
+    }
+    renderShopSearch();
+    syncBellDot();
+  }
   async function loadHistory() {
     const list = $("history-list");
-    list.innerHTML = '<p class="muted">กำลังโหลด…</p>';
+    if (list && !(state.todayJobs || []).length) list.innerHTML = '<p class="muted">กำลังโหลด…</p>';
     let hq = sb.from("jobs")
-      .select("id,pup_ids,shop_names,driver_id,driver_ids,sender_email,created_at,status,note,error,job_type,payload");
+      .select("id,job_code,pup_ids,shop_names,driver_id,driver_ids,sender_email,created_at,status,note,error,job_type,payload");
     if (!state.isAdmin) hq = hq.eq("sender_email", state.email);
     const { data, error } = await hq
       .gte("created_at", todayStartIso())
       .order("created_at", { ascending: false })
       .limit(500);
-    if (error) { list.innerHTML = '<p class="msg error">โหลดประวัติไม่สำเร็จ</p>'; return; }
-    $("history-count").textContent = data.length;
-    if (!data.length) { list.innerHTML = '<p class="muted">วันนี้ยังไม่มีงาน</p>'; return; }
-    const typeLabel = { book: "บุ๊คงาน", reassign: "เปลี่ยนคนขับ", mass_reassign: "Mass re-assign", disable: "Disable" };
-    const driverLine = (j) => {
-      const p = j.payload || {};
-      if (j.job_type === "mass_reassign") return `<span>Driver <b>${esc(p.current_driver_id || "?")}</b> → <b>${esc(p.target_driver_id || j.driver_id)}</b></span>`;
-      if (j.job_type === "disable") return `<span>Disable Driver <b>${esc(p.driver_id || j.driver_id)}</b></span>`;
-      if (j.job_type === "reassign") return `<span>Driver ใหม่ <b>${esc(p.new_driver_id || j.driver_id)}</b></span>`;
-      const ids = (Array.isArray(j.driver_ids) && j.driver_ids.length) ? j.driver_ids : (j.driver_id ? [j.driver_id] : []);
-      return `<span>Driver${ids.length > 1 ? ` (${ids.length} คน)` : ""} ${ids.map((d) => `<b>${esc(d)}</b>`).join(", ") || "<b>?</b>"}</span>`;
-    };
-    const label = { pending: "รอบุ๊ค", processing: "กำลังบุ๊ค", done: "บุ๊คแล้ว", failed: "บุ๊คไม่สำเร็จ", sent: "ส่งแล้ว", test: "ทดสอบ" };
-    list.innerHTML = data.map((j) => `
-      <div class="card job">
-        <div class="job-top">
-          <span class="time">${esc(bkkTime(j.created_at))}</span>
-          <span class="type-tag ${esc(j.job_type || "book")}">${esc(typeLabel[j.job_type] || "บุ๊คงาน")}</span>
-          <span class="badge ${esc(j.status)}">${esc(label[j.status] || j.status)}</span>
-        </div>
-        <div class="job-shops">${esc((j.pup_ids || []).map((p, i) => shopName(p) || (j.shop_names || [])[i] || p).join(", "))}</div>
-        <div class="muted small">${esc(j.pup_ids.join(", "))}</div>
-        <div class="job-meta">${driverLine(j)}${state.isAdmin ? `<span class="small">👤 ขอโดย <b>${esc(j.sender_email)}</b></span>` : ""}</div>
-        ${(j.note || j.error) ? `<div class="muted small">${esc(j.error || j.note)}</div>` : ""}
-      </div>`).join("");
+    if (error) {
+      state.todayJobs = [];
+      if (list) list.innerHTML = '<p class="msg error">โหลดประวัติไม่สำเร็จ</p>';
+      const home = $("home-recent");
+      if (home) home.innerHTML = '<p class="msg error">โหลดงานวันนี้ไม่สำเร็จ</p>';
+      syncBellDot();
+      return;
+    }
+    state.todayJobs = data || [];
+    renderHistoryLists();
   }
   $("history-refresh").addEventListener("click", loadHistory);
+  document.querySelectorAll("#hist-filters .chip-filter").forEach((b) => {
+    b.addEventListener("click", () => {
+      state.histFilter = b.dataset.filter || "all";
+      document.querySelectorAll("#hist-filters .chip-filter").forEach((x) => {
+        const on = x === b;
+        x.classList.toggle("active", on);
+        x.setAttribute("aria-selected", on ? "true" : "false");
+      });
+      renderHistoryLists();
+    });
+  });
+  if ($("app-search")) {
+    $("app-search").addEventListener("input", renderHistoryLists);
+    $("app-search").addEventListener("search", renderHistoryLists);
+  }
+  if ($("app-search-btn")) {
+    $("app-search-btn").addEventListener("click", () => {
+      renderHistoryLists();
+      if (document.body.dataset.tab !== "history" && (($("app-search").value || "").trim())) {
+        const tab = document.querySelector('.tab[data-tab="history"]');
+        if (tab) tab.click();
+      }
+    });
+  }
 
   // ---------- Admin: ผู้ใช้ ----------
   async function loadUsers() {

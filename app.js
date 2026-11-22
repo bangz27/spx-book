@@ -19,7 +19,7 @@
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-  const state = { email: "", isAdmin: false, shops: [], selected: [], view: "" };
+  const state = { email: "", isAdmin: false, selected: [], view: "" };
 
   // ---------- helpers ----------
   function showView(name) {
@@ -40,8 +40,42 @@
     const d = new Date(Date.now() + 7 * 3600e3).toISOString().slice(0, 10);
     return new Date(`${d}T00:00:00+07:00`).toISOString();
   }
-  const shopName = (pup) => (state.shops.find((s) => s.pup_id === pup) || {}).name
-    || ((state.dir || []).find((e) => e.pup === pup) || {}).name || "";
+  // ชื่อแสดงผล: ชื่อทางการ (ชื่อสั้น) เมื่อมีชื่อสั้นและต่างจากชื่อทางการ
+  function formatShopLabel(official, shortName) {
+    const name = String(official || "").trim();
+    const nick = String(shortName || "").trim();
+    if (name && nick && nick !== name) return `${name} (${nick})`;
+    return name || nick || "";
+  }
+  const shopName = (pup) => {
+    const e = (state.dir || []).find((x) => x.pup === pup);
+    if (!e) return "";
+    return formatShopLabel(e.name, e.nick);
+  };
+  // "หลัง 13:30 เท่านั้น" ในป้ายปัจจุบัน = เปิดหน้าต่างตั้งแต่ 13:30:00 น. (Asia/Bangkok) ของวันนั้น
+  const BOOK_CUTOFF = "13:30";
+  const bookBlockedMsg = "ส่งงานได้หลัง 13:30 เท่านั้น ก่อนเวลาให้แจ้งบังส่วนตัว";
+  function bkkHM() {
+    return new Date().toLocaleTimeString("en-GB", {
+      timeZone: "Asia/Bangkok", hour: "2-digit", minute: "2-digit", hour12: false,
+    });
+  }
+  function canBookNow() { return !!state.isAdmin || bkkHM() >= BOOK_CUTOFF; }
+  function syncBookCutoff() {
+    const blocked = !canBookNow();
+    document.querySelectorAll(".book-time-notice").forEach((el) => el.classList.toggle("is-blocked", blocked));
+    const apply = (id, skipIfDone) => {
+      const b = $(id);
+      if (!b) return;
+      if (skipIfDone && b.classList.contains("done")) return;
+      b.disabled = blocked;
+      b.title = blocked ? bookBlockedMsg : "";
+    };
+    apply("send-btn", true);
+    apply("ra-btn", false);
+    apply("mra-btn", false);
+    apply("dis-btn", false);
+  }
 
   // ---------- ล็อกอิน ----------
   $("login-form").addEventListener("submit", async (e) => {
@@ -100,9 +134,9 @@
     $("who-email").textContent = data.name ? `${data.name}` : email;
     $("tab-admin").hidden = !state.isAdmin;
     showView("app");
-    await loadShops();
-    loadDirectory();
+    await loadDirectory();
     loadDrivers();
+    syncBookCutoff();
     switchTab("send");
     startWatch();
   }
@@ -117,14 +151,6 @@
     if (tab === "admin") { loadUsers(); loadDirectory().then(renderShopAdmin); }
   }
   document.querySelectorAll(".tab").forEach((t) => t.addEventListener("click", () => switchTab(t.dataset.tab)));
-
-  // ---------- ร้าน ----------
-  async function loadShops() {
-    const { data, error } = await sb.from("shops").select("pup_id,name,sort_order").order("sort_order").order("name");
-    if (error) return;
-    state.shops = data || [];
-    document.querySelectorAll(".book-pup").forEach(updateRowHint);
-  }
 
   // ---------- ช่องร้าน (ช่องละ 1 ร้าน) ----------
   const PH = "เช่น up2u, ตั้งเจริญ, สัง, พิชา หรือ PUP ID";
@@ -200,6 +226,8 @@
   sendBtn.addEventListener("click", () => {
     if (sendBtn.disabled) return;
     const msg = $("send-msg");
+    syncBookCutoff();
+    if (!canBookNow()) return showMsg(msg, "error", bookBlockedMsg);
     // อ่านทุกช่อง: ข้ามช่องว่าง, แปลงชื่อร้านเป็น PUP ID, ตัดร้านซ้ำ
     const picked = [];
     const inputs = [...document.querySelectorAll(".book-pup")];
@@ -257,6 +285,8 @@
   async function submitBooking() {
     if (sendBtn.disabled) return;
     const msg = $("send-msg");
+    syncBookCutoff();
+    if (!canBookNow()) return showMsg(msg, "error", bookBlockedMsg);
     const drivers = state.selDrivers || [];
     if (!state.selected.length || !drivers.length || drivers.length > 20 || !drivers.every((d) => /^\d+$/.test(d))) return;
 
@@ -359,22 +389,22 @@
   function startWatch() {
     known.clear(); watchSeeded = false;
     checkMyJobs();
+    syncBookCutoff();
     clearInterval(watchTimer);
-    watchTimer = setInterval(checkMyJobs, 15000);
+    watchTimer = setInterval(() => { checkMyJobs(); syncBookCutoff(); }, 15000);
   }
   document.addEventListener("visibilitychange", () => { if (!document.hidden) checkMyJobs(); });
 
   // ---------- Autocomplete ร้าน (ชื่อร้าน / PUP ID / ที่อยู่) ----------
   state.dir = [];
   async function loadDirectory() {
-    const { data, error } = await sb.from("pup_directory").select("pup_id,shop_name,address").order("pup_id").limit(5000);
+    const { data, error } = await sb.from("pup_directory").select("pup_id,shop_name,address,nickname").order("pup_id").limit(5000);
     if (error) return;
-    const map = new Map((data || []).map((d) => [d.pup_id, { pup: d.pup_id, name: d.shop_name || "", addr: d.address || "", nick: "" }]));
-    for (const s of state.shops) {
-      const e = map.get(s.pup_id) || { pup: s.pup_id, name: "", addr: "", nick: "" };
-      e.nick = s.name; map.set(s.pup_id, e);
-    }
-    state.dir = [...map.values()].map((e) => ({ ...e, hay: (e.pup + " " + e.nick + " " + e.name + " " + e.addr).toLowerCase() }));
+    state.dir = (data || []).map((d) => {
+      const e = { pup: d.pup_id, name: d.shop_name || "", addr: d.address || "", nick: d.nickname || "" };
+      return { ...e, hay: (e.pup + " " + e.nick + " " + e.name + " " + e.addr).toLowerCase() };
+    });
+    document.querySelectorAll(".book-pup").forEach(updateRowHint);
   }
   const acBox = document.createElement("div");
   acBox.className = "ac-box"; acBox.hidden = true; acBox.setAttribute("role", "listbox");
@@ -409,7 +439,7 @@
         <div class="ac-pup">${esc(e.code)}</div>
       </div>` : `
       <div class="ac-item${i === acIdx ? " active" : ""}" role="option" data-i="${i}">
-        <div class="ac-name">${e.nick ? `<b>${esc(e.nick)}</b> ` : ""}${esc(e.name || (e.nick ? "" : "(ไม่มีชื่อร้าน)"))}</div>
+        <div class="ac-name"><b>${esc(formatShopLabel(e.name, e.nick) || "(ไม่มีชื่อร้าน)")}</b></div>
         <div class="ac-pup">${esc(e.pup)}</div>
         ${e.addr ? `<div class="ac-addr">${esc(e.addr)}</div>` : ""}
       </div>`).join("");
@@ -677,12 +707,14 @@
     if (btn.disabled) return;
     const t = btn.textContent;
     btn.disabled = true; btn.textContent = "กำลังส่ง…";
-    try { await fn(); } finally { btn.disabled = false; btn.textContent = t; }
+    try { await fn(); } finally { btn.disabled = false; btn.textContent = t; syncBookCutoff(); }
   }
 
   $("ra-form").addEventListener("submit", (e) => {
     e.preventDefault();
     const msg = $("ra-msg");
+    syncBookCutoff();
+    if (!canBookNow()) return showMsg(msg, "error", bookBlockedMsg);
     const pup = $("ra-pup").value.trim().toUpperCase();
     if (!PUP_RE.test(pup)) return showMsg(msg, "error", "PUP ID ต้องขึ้นต้นด้วย PUP ตามด้วยตัวอักษรอังกฤษ/ตัวเลข");
     const drv = drvField("ra-driver", msg, "Driver ID ใหม่");
@@ -728,6 +760,8 @@
   $("mra-form").addEventListener("submit", (e) => {
     e.preventDefault();
     const msg = $("mra-msg");
+    syncBookCutoff();
+    if (!canBookNow()) return showMsg(msg, "error", bookBlockedMsg);
     const cur = drvField("mra-current", msg, "Driver ID ปัจจุบัน");
     if (!cur) return;
     const pups = [...new Set([...document.querySelectorAll(".mra-pup")].map((i) => i.value.trim().toUpperCase()).filter(Boolean))];
@@ -750,6 +784,8 @@
   function closeDis() { disModal.hidden = true; document.body.classList.remove("modal-open"); }
   $("dis-form").addEventListener("submit", (e) => {
     e.preventDefault();
+    syncBookCutoff();
+    if (!canBookNow()) return showMsg($("dis-msg"), "error", bookBlockedMsg);
     const drv = drvField("dis-driver", $("dis-msg"), "Driver ID");
     if (!drv) return;
     $("dis-msg").hidden = true;
@@ -768,6 +804,11 @@
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !disModal.hidden) closeDis(); });
   disOk.addEventListener("click", async () => {
     if (disOk.disabled || disInput.value.trim() !== disDriver) return;
+    syncBookCutoff();
+    if (!canBookNow()) {
+      closeDis();
+      return showMsg($("dis-msg"), "error", bookBlockedMsg);
+    }
     disOk.disabled = true;
     disOk.textContent = "กำลังส่ง…";
     const { data: r, error } = await sb.rpc("submit_disable", { p_driver_id: disDriver });
@@ -807,7 +848,7 @@
           <span class="type-tag ${esc(j.job_type || "book")}">${esc(typeLabel[j.job_type] || "บุ๊คงาน")}</span>
           <span class="badge ${esc(j.status)}">${esc(label[j.status] || j.status)}</span>
         </div>
-        <div class="job-shops">${esc((j.shop_names || []).join(", "))}</div>
+        <div class="job-shops">${esc((j.pup_ids || []).map((p, i) => shopName(p) || (j.shop_names || [])[i] || p).join(", "))}</div>
         <div class="muted small">${esc(j.pup_ids.join(", "))}</div>
         <div class="job-meta">${driverLine(j)}${state.isAdmin ? `<span class="small">👤 ขอโดย <b>${esc(j.sender_email)}</b></span>` : ""}</div>
         ${(j.note || j.error) ? `<div class="muted small">${esc(j.error || j.note)}</div>` : ""}
@@ -872,7 +913,7 @@
     list.innerHTML = rows.map((e) => `
       <div class="list-row">
         <div class="grow">
-          <b>${esc(e.name || "(ไม่มีชื่อร้าน)")}</b>
+          <b>${esc(formatShopLabel(e.name, e.nick) || "(ไม่มีชื่อร้าน)")}</b>
           <div class="muted small">${esc(e.pup)}</div>
           ${e.addr ? `<div class="muted small">${esc(e.addr)}</div>` : ""}
         </div>
@@ -885,13 +926,14 @@
     e.preventDefault();
     const pup = $("shop-pup").value.trim().toUpperCase();
     const name = $("shop-name").value.trim();
+    const nick = ($("shop-nick") && $("shop-nick").value.trim()) || "";
     const addr = $("shop-addr").value.trim();
     const msg = $("shop-msg");
     if (!/^PUP[A-Z0-9]{3,37}$/.test(pup)) return showMsg(msg, "error", "PUP ID ต้องขึ้นต้นด้วย PUP ตามด้วยตัวอักษรอังกฤษ/ตัวเลข");
     if (!name) return showMsg(msg, "error", "กรุณากรอกชื่อร้าน");
     const existing = state.dir.find((d) => d.pup === pup);
     const { error } = await sb.from("pup_directory").upsert({
-      pup_id: pup, shop_name: name, address: addr || null, updated_at: new Date().toISOString(),
+      pup_id: pup, shop_name: name, nickname: nick || null, address: addr || null, updated_at: new Date().toISOString(),
     });
     if (error) return showMsg(msg, "error", "บันทึกไม่สำเร็จ: " + esc(error.message));
     showMsg(msg, "ok", existing ? `แก้ไข ${esc(name)} แล้ว` : `เพิ่ม ${esc(name)} แล้ว`);
@@ -908,6 +950,7 @@
     if (b.dataset.act === "edit") {
       $("shop-pup").value = s.pup;
       $("shop-name").value = s.name || "";
+      if ($("shop-nick")) $("shop-nick").value = s.nick || "";
       $("shop-addr").value = s.addr || "";
       $("shop-name").focus();
       return;

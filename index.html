@@ -16,7 +16,7 @@
   <link rel="preload" href="fonts/EkkamaiVibe-Heavy.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Mitr:wght@500;600&family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=24">
+  <link rel="stylesheet" href="style.css?v=25">
 </head>
 <body>
   <!-- กำลังโหลด -->
@@ -68,7 +68,7 @@
     <!-- ส่งงาน -->
     <section id="page-send" class="page">
       <div class="card">
-        <p class="book-time-notice" role="note">❌ บุ๊คงานหลัง 13:30 เท่านั้น ก่อนเวลาให้แจ้งบังส่วนตัว เดี๋ยวเปอร์เซ็นต์จะตก และโควต้าบอตจะลดเยอะ 👌</p>
+        <p class="book-time-notice" role="note">❌ ส่งงานได้หลัง 13:30 เท่านั้น (บุ๊ค / เปลี่ยนคนขับ / Disable) ก่อนเวลาให้แจ้งบังส่วนตัว เดี๋ยวเปอร์เซ็นต์จะตก และโควต้าบอตจะลดเยอะ 👌</p>
         <label>ร้าน (ช่องละ 1 ร้าน)</label>
         <div id="book-pups" class="stack pup-fields"></div>
         <button id="book-add" class="btn add-btn block" type="button">＋ เพิ่มช่อง</button>
@@ -87,6 +87,7 @@
 
     <!-- เปลี่ยนคนขับ -->
     <section id="page-reassign" class="page" hidden>
+      <p class="book-time-notice" role="note">❌ ส่งงานได้หลัง 13:30 เท่านั้น (บุ๊ค / เปลี่ยนคนขับ / Disable) ก่อนเวลาให้แจ้งบังส่วนตัว เดี๋ยวเปอร์เซ็นต์จะตก และโควต้าบอตจะลดเยอะ 👌</p>
       <div class="card">
         <h2>เปลี่ยนคนขับ (ร้านเดียว)</h2>
         <form id="ra-form" novalidate>
@@ -156,8 +157,10 @@
         <form id="shop-form" class="stack" novalidate>
           <label for="shop-pup">PUP ID</label>
           <input id="shop-pup" type="text" placeholder="PUP202610220S3YE" autocapitalize="characters" autocomplete="off" spellcheck="false" required>
-          <label for="shop-name">ชื่อร้าน</label>
+          <label for="shop-name">ชื่อร้าน (ชื่อทางการ)</label>
           <input id="shop-name" type="text" placeholder="ชื่อร้าน" required>
+          <label for="shop-nick">คำค้น/ชื่อสั้น (โชว์ต่อท้ายชื่อทางการเป็น ชื่อทางการ (ชื่อสั้น) ถ้าต่างกัน และใช้ค้นหาได้)</label>
+          <input id="shop-nick" type="text" placeholder="เช่น up2u, พิชา, สังฆภัณฑ์">
           <label for="shop-addr">ที่อยู่</label>
           <input id="shop-addr" type="text" placeholder="ที่อยู่ (ไม่บังคับ)">
           <button class="btn primary" type="submit">เพิ่ม / แก้ไขร้าน</button>
@@ -223,7 +226,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=24"></script>
+  <script src="app.js?v=25"></script>
   <script src="pwa.js"></script>
   <script src="donate.js"></script>
   <script src="theme.js"></script>

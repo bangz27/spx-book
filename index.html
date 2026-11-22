@@ -3,20 +3,20 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#f5b800">
+  <meta name="theme-color" content="#2DC86A">
   <title>SPX Book</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="SPX Book">
   <link rel="preload" href="fonts/EkkamaiVibe-Regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="fonts/EkkamaiVibe-Heavy.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Mitr:wght@500;600&family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=25">
+  <link rel="stylesheet" href="style.css?v=26">
 </head>
 <body>
   <!-- กำลังโหลด -->
@@ -27,6 +27,7 @@
   <!-- ล็อกอิน -->
   <main id="view-login" class="center-screen" hidden>
     <div class="card login-card">
+      <div class="logo-mark" aria-hidden="true">S</div>
       <div class="brand">SPX <span>Book</span></div>
       <p class="muted">เข้าสู่ระบบด้วยอีเมลและรหัสผ่าน</p>
       <form id="login-form" novalidate>
@@ -45,6 +46,7 @@
   <!-- ไม่มีสิทธิ์ -->
   <main id="view-denied" class="center-screen" hidden>
     <div class="card login-card">
+      <div class="logo-mark" aria-hidden="true">S</div>
       <div class="brand">SPX <span>Book</span></div>
       <div class="msg error">อีเมล <b id="denied-email"></b> ไม่มีสิทธิ์ใช้งาน กรุณาติดต่อ Admin</div>
       <button class="btn block js-logout" type="button">ออกจากระบบ</button>
@@ -54,30 +56,68 @@
   <!-- แอปหลัก -->
   <div id="view-app" hidden>
     <header class="topbar">
-      <div class="brand small">SPX <span>Book</span></div>
+      <div class="greet">
+        <p class="hello">สวัสดี</p>
+        <span id="who-email"></span>
+      </div>
       <div class="who">
         <button id="sound-toggle" class="icon-btn" type="button" aria-pressed="true" title="เสียงแจ้งเตือนเมื่องานสำเร็จ">🔔</button>
         <button id="sound-test" class="icon-btn small-txt" type="button" title="ทดสอบเสียง">▶ ทดสอบ</button>
-        <span id="who-email"></span>
         <button class="link js-logout" type="button">ออก</button>
       </div>
-      <h1 id="page-title" class="page-title">ส่งงาน</h1>
+      <h1 id="page-title" class="page-title">หน้าหลัก</h1>
     </header>
 
+    <!-- หน้าหลัก -->
+    <section id="page-home" class="page">
+      <div id="book-status-hero" class="hero-card book-time-notice" role="status">
+        <p class="hero-kicker">หน้าต่างส่งงาน</p>
+        <p class="hero-closed">ยังไม่เปิด — เปิดหลัง 13:30</p>
+        <p class="hero-open">เปิดรับงานแล้ว</p>
+        <p class="hero-note">บุ๊ค / เปลี่ยนคนขับ / ย้ายหลายร้าน / Disable — ก่อนเวลาให้แจ้งบังส่วนตัว</p>
+      </div>
+      <h2 class="section-label">เมนู</h2>
+      <div class="feature-grid" role="navigation" aria-label="เมนูหลัก">
+        <button class="feature-tile tile-send" type="button" data-nav="send">
+          <span class="tile-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 7.5 12 3l9 4.5v9L12 21l-9-4.5z"/><path d="M3 7.5 12 12l9-4.5M12 12v9"/></svg></span>
+          <span class="tile-label">ส่งงาน</span>
+        </button>
+        <button class="feature-tile tile-reassign" type="button" data-nav="reassign" data-jump="#ra-form">
+          <span class="tile-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg></span>
+          <span class="tile-label">เปลี่ยนคนขับ</span>
+        </button>
+        <button class="feature-tile tile-mass" type="button" data-nav="reassign" data-jump="#mra-form">
+          <span class="tile-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="7" height="7" rx="1.5"/><rect x="14" y="4" width="7" height="7" rx="1.5"/><rect x="3" y="13" width="7" height="7" rx="1.5"/><path d="M14 16.5h7M17.5 13v7"/></svg></span>
+          <span class="tile-label">ย้ายหลายร้าน</span>
+        </button>
+        <button class="feature-tile tile-disable" type="button" data-nav="reassign" data-jump="#dis-form">
+          <span class="tile-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></svg></span>
+          <span class="tile-label">Disable</span>
+        </button>
+        <button class="feature-tile tile-history" type="button" data-nav="history">
+          <span class="tile-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+          <span class="tile-label">ประวัติ</span>
+        </button>
+        <button class="feature-tile tile-admin" type="button" data-nav="admin" hidden>
+          <span class="tile-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></span>
+          <span class="tile-label">Admin</span>
+        </button>
+      </div>
+    </section>
 
     <!-- ส่งงาน -->
-    <section id="page-send" class="page">
+    <section id="page-send" class="page" hidden>
       <div class="card">
         <p class="book-time-notice" role="note">❌ ส่งงานได้หลัง 13:30 เท่านั้น (บุ๊ค / เปลี่ยนคนขับ / Disable) ก่อนเวลาให้แจ้งบังส่วนตัว เดี๋ยวเปอร์เซ็นต์จะตก และโควต้าบอตจะลดเยอะ 👌</p>
         <label>ร้าน (ช่องละ 1 ร้าน)</label>
         <div id="book-pups" class="stack pup-fields"></div>
         <button id="book-add" class="btn add-btn block" type="button">＋ เพิ่มช่อง</button>
-        <p class="muted small hint">พิมพ์ชื่อร้านหรือ PUP ID แล้วแตะเลือกจากรายการ · ช่องที่ว่างจะถูกข้าม</p>
+        <p class="muted small hint">พิมพ์ชื่อร้านหรือ PUP ID แล้วแตะเลือกจากรายการ — ช่องที่ว่างจะถูกข้าม</p>
 
         <label>คนขับ (ช่องละ 1 คน)</label>
         <div id="book-drivers" class="stack pup-fields"></div>
         <button id="book-drv-add" class="btn add-btn block" type="button">＋ เพิ่มคนขับ</button>
-        <p class="muted small hint">พิมพ์ชื่อหรือรหัสพนักงาน · วางหลายรหัสคั่นด้วยลูกน้ำ เว้นวรรค หรือขึ้นบรรทัดใหม่ได้ · สูงสุด 20 คน</p>
+        <p class="muted small hint">พิมพ์ชื่อหรือรหัสพนักงาน — วางหลายรหัสคั่นด้วยลูกน้ำ เว้นวรรค หรือขึ้นบรรทัดใหม่ได้ — สูงสุด 20 คน</p>
 
         <button id="send-btn" class="btn primary block big" type="button">ส่งงาน</button>
         <div id="send-msg" class="msg" hidden></div>
@@ -133,7 +173,10 @@
         <h2>งานที่ส่งวันนี้ <span id="history-count" class="pill"></span></h2>
         <button id="history-refresh" class="btn small" type="button">รีเฟรช</button>
       </div>
-      <div id="history-list"></div>
+      <p class="history-group">วันนี้</p>
+      <div class="history-card">
+        <div id="history-list"></div>
+      </div>
     </section>
 
     <!-- Admin -->
@@ -170,10 +213,26 @@
       </div>
     </section>
     <nav class="tabs" role="tablist" aria-label="เมนู">
-      <button class="tab active" data-tab="send" type="button" aria-label="ส่งงาน" title="ส่งงาน"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7.5 12 3l9 4.5v9L12 21l-9-4.5z"/><path d="M3 7.5 12 12l9-4.5M12 12v9"/></svg></button>
-      <button class="tab" data-tab="reassign" type="button" aria-label="เปลี่ยนคนขับ" title="เปลี่ยนคนขับ"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg></button>
-      <button class="tab" data-tab="history" type="button" aria-label="ประวัติวันนี้" title="ประวัติวันนี้"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></button>
-      <button class="tab" data-tab="admin" type="button" id="tab-admin" aria-label="Admin" title="Admin" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+      <button class="tab active" data-tab="home" type="button" aria-label="หน้าหลัก" title="หน้าหลัก">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1z"/></svg>
+        <span class="tab-label">หลัก</span>
+      </button>
+      <button class="tab" data-tab="reassign" type="button" aria-label="เปลี่ยนคนขับ" title="เปลี่ยนคนขับ">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg>
+        <span class="tab-label">ย้ายงาน</span>
+      </button>
+      <button class="tab tab-fab" data-tab="send" type="button" aria-label="ส่งงาน" title="ส่งงาน">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        <span class="tab-label">ส่งงาน</span>
+      </button>
+      <button class="tab" data-tab="history" type="button" aria-label="ประวัติวันนี้" title="ประวัติวันนี้">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        <span class="tab-label">ประวัติ</span>
+      </button>
+      <button class="tab" data-tab="admin" type="button" id="tab-admin" aria-label="Admin" title="Admin" hidden>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+        <span class="tab-label">Admin</span>
+      </button>
     </nav>
   </div>
 
@@ -185,19 +244,18 @@
     <div class="modal-card">
       <h2 id="donate-title">ช่วยอุดหนุนบอตหนูหน่อยน้า 🥺</h2>
       <p class="muted">ค่าไฟ ค่าเน็ต ค่าขนมให้บอตบุ๊คงานได้ทุกวัน เท่าไหร่ก็ได้ ขอบคุณครับ 💛</p>
-      <img src="img/promptpay.jpg" alt="QR พร้อมเพย์ นิติพนธ์ แดงเนียม" class="qr" loading="lazy">
+      <img class="qr" src="img/promptpay.jpg" alt="QR พร้อมเพย์ สำหรับอุดหนุนบอต">
       <div class="modal-actions">
-        <a class="btn primary" href="img/promptpay.jpg" download="promptpay-spx-book.jpg">บันทึกรูป</a>
         <button id="donate-close" class="btn dark" type="button">ปิด</button>
       </div>
     </div>
   </div>
 
   <div id="book-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="book-modal-title" hidden>
-    <div class="modal-card">
+    <div class="modal-card sheet">
       <h2 id="book-modal-title">ตรวจร้านก่อนส่งนะ 🙏</h2>
       <p class="book-modal-tip">ถ้าจะบุ๊คหลายร้าน ให้เพิ่มให้ครบแล้วส่งทีเดียวเลยนะ จะได้ไม่เด้งหลายรอบ</p>
-      <div class="book-modal-sum"><span id="book-modal-count"></span> · Driver <b id="book-modal-driver"></b></div>
+      <div class="book-modal-sum"><span id="book-modal-count"></span> — Driver <b id="book-modal-driver"></b></div>
       <ol id="book-modal-list" class="book-modal-list"></ol>
       <div class="modal-actions book-actions">
         <button id="book-modal-back" class="btn" type="button">กลับไปเพิ่มร้าน</button>
@@ -222,11 +280,20 @@
     </div>
   </div>
 
+  <div id="ok-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="ok-modal-title" hidden>
+    <div class="modal-card ok-card">
+      <div class="ok-check" aria-hidden="true">✓</div>
+      <h2 id="ok-modal-title">ส่งงานสำเร็จ</h2>
+      <p id="ok-modal-body" class="muted"></p>
+      <button id="ok-modal-ok" class="btn primary block big" type="button">ตกลง</button>
+    </div>
+  </div>
+
   <button id="install-btn" class="btn primary install-fab" type="button" hidden>📲 ติดตั้งแอป</button>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=25"></script>
+  <script src="app.js?v=26"></script>
   <script src="pwa.js"></script>
   <script src="donate.js"></script>
   <script src="theme.js"></script>

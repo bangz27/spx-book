@@ -137,7 +137,7 @@
     await loadDirectory();
     loadDrivers();
     syncBookCutoff();
-    switchTab("send");
+    switchTab("home");
     startWatch();
   }
 
@@ -146,7 +146,7 @@
   // ---------- แท็บ ----------
   function switchTab(tab) {
     document.querySelectorAll(".tab").forEach((t) => t.classList.toggle("active", t.dataset.tab === tab));
-    for (const p of ["send", "reassign", "history", "admin"]) $("page-" + p).hidden = p !== tab;
+    for (const p of ["home", "send", "reassign", "history", "admin"]) $("page-" + p).hidden = p !== tab;
     if (tab === "history") loadHistory();
     if (tab === "admin") { loadUsers(); loadDirectory().then(renderShopAdmin); }
   }
@@ -253,10 +253,10 @@
     msg.hidden = true;
     $("book-modal-count").textContent = `${state.selected.length} ร้าน`;
     $("book-modal-driver").textContent = (drivers.length > 1 ? `(${drivers.length} คน) ` : "")
-      + drivers.map((d) => d + (drvName(d) ? " · " + drvName(d) : "")).join(", ");
+      + drivers.map((d) => d + (drvName(d) ? " — " + drvName(d) : "")).join(", ");
     $("book-modal-list").innerHTML = state.selected.map((p) => {
       const n = shopName(p);
-      return `<li>${n ? `<b>${esc(n)}</b> · ` : ""}<span class="muted">${esc(p)}</span></li>`;
+      return `<li>${n ? `<b>${esc(n)}</b> — ` : ""}<span class="muted">${esc(p)}</span></li>`;
     }).join("");
     bookModal.hidden = false;
     document.body.classList.add("modal-open");
@@ -301,7 +301,7 @@
     if (!error && r && !r.duplicate) {
       sendBtn.textContent = "ส่งแล้ว ✅";
       sendBtn.classList.add("done");
-      showMsg(msg, "ok", `ส่งงานเรียบร้อย รอ Bot บุ๊คให้ · ${esc(r.sent_at || "")}`);
+      showMsg(msg, "ok", `ส่งงานเรียบร้อย รอ Bot บุ๊คให้ — ${esc(r.sent_at || "")}`);
       $("send-new").hidden = false;
     } else if (!error && r && r.duplicate) {
       sendBtn.textContent = "งานนี้ส่งไปแล้ว";
@@ -700,7 +700,7 @@
   function resultMsg(msg, r, error) {
     if (error) return showMsg(msg, "error", esc(rpcError(error))), false;
     if (r && r.duplicate) return showMsg(msg, "warn", `<b>งานนี้ส่งไปแล้ว</b> เมื่อ ${esc(r.sent_at || "")} (ภายใน 10 นาที) ระบบไม่ส่งซ้ำ`), true;
-    showMsg(msg, "ok", `ส่งงานเรียบร้อย รอ Bot ดำเนินการ · ${esc((r && r.sent_at) || "")}`);
+    showMsg(msg, "ok", `ส่งงานเรียบร้อย รอ Bot ดำเนินการ — ${esc((r && r.sent_at) || "")}`);
     return true;
   }
   async function busy(btn, fn) {

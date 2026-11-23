@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#f5b800">
+  <meta name="theme-color" content="#F6F5F3">
   <title>SPX Book</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
@@ -16,7 +16,7 @@
   <link rel="preload" href="fonts/EkkamaiVibe-Heavy.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Mitr:wght@500;600&family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=25">
+  <link rel="stylesheet" href="style.css?v=28">
 </head>
 <body>
   <!-- กำลังโหลด -->
@@ -72,12 +72,12 @@
         <label>ร้าน (ช่องละ 1 ร้าน)</label>
         <div id="book-pups" class="stack pup-fields"></div>
         <button id="book-add" class="btn add-btn block" type="button">＋ เพิ่มช่อง</button>
-        <p class="muted small hint">พิมพ์ชื่อร้านหรือ PUP ID แล้วแตะเลือกจากรายการ · ช่องที่ว่างจะถูกข้าม</p>
+        <p class="muted small hint">พิมพ์ชื่อร้านหรือ PUP ID แล้วแตะเลือกจากรายการ — ช่องที่ว่างจะถูกข้าม</p>
 
         <label>คนขับ (ช่องละ 1 คน)</label>
         <div id="book-drivers" class="stack pup-fields"></div>
         <button id="book-drv-add" class="btn add-btn block" type="button">＋ เพิ่มคนขับ</button>
-        <p class="muted small hint">พิมพ์ชื่อหรือรหัสพนักงาน · วางหลายรหัสคั่นด้วยลูกน้ำ เว้นวรรค หรือขึ้นบรรทัดใหม่ได้ · สูงสุด 20 คน</p>
+        <p class="muted small hint">พิมพ์ชื่อหรือรหัสพนักงาน — วางหลายรหัสคั่นด้วยลูกน้ำ เว้นวรรค หรือขึ้นบรรทัดใหม่ได้ — สูงสุด 20 คน</p>
 
         <button id="send-btn" class="btn primary block big" type="button">ส่งงาน</button>
         <div id="send-msg" class="msg" hidden></div>
@@ -170,10 +170,22 @@
       </div>
     </section>
     <nav class="tabs" role="tablist" aria-label="เมนู">
-      <button class="tab active" data-tab="send" type="button" aria-label="ส่งงาน" title="ส่งงาน"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7.5 12 3l9 4.5v9L12 21l-9-4.5z"/><path d="M3 7.5 12 12l9-4.5M12 12v9"/></svg></button>
-      <button class="tab" data-tab="reassign" type="button" aria-label="เปลี่ยนคนขับ" title="เปลี่ยนคนขับ"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg></button>
-      <button class="tab" data-tab="history" type="button" aria-label="ประวัติวันนี้" title="ประวัติวันนี้"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></button>
-      <button class="tab" data-tab="admin" type="button" id="tab-admin" aria-label="Admin" title="Admin" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+      <button class="tab" data-tab="reassign" type="button" aria-label="เปลี่ยนคนขับ" title="เปลี่ยนคนขับ">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg>
+        <span class="tab-label">ย้ายงาน</span>
+      </button>
+      <button class="tab tab-fab active" data-tab="send" type="button" aria-label="ส่งงาน" title="ส่งงาน">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        <span class="tab-label visually-hidden">ส่งงาน</span>
+      </button>
+      <button class="tab" data-tab="history" type="button" aria-label="ประวัติวันนี้" title="ประวัติวันนี้">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v12H4zM8 7V5h8v2"/><path d="M8 12h8M8 16h5"/></svg>
+        <span class="tab-label">ประวัติ</span>
+      </button>
+      <button class="tab" data-tab="admin" type="button" id="tab-admin" aria-label="Admin" title="Admin" hidden>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1-.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+        <span class="tab-label">Admin</span>
+      </button>
     </nav>
   </div>
 
@@ -197,7 +209,7 @@
     <div class="modal-card">
       <h2 id="book-modal-title">ตรวจร้านก่อนส่งนะ 🙏</h2>
       <p class="book-modal-tip">ถ้าจะบุ๊คหลายร้าน ให้เพิ่มให้ครบแล้วส่งทีเดียวเลยนะ จะได้ไม่เด้งหลายรอบ</p>
-      <div class="book-modal-sum"><span id="book-modal-count"></span> · Driver <b id="book-modal-driver"></b></div>
+      <div class="book-modal-sum"><span id="book-modal-count"></span> — Driver <b id="book-modal-driver"></b></div>
       <ol id="book-modal-list" class="book-modal-list"></ol>
       <div class="modal-actions book-actions">
         <button id="book-modal-back" class="btn" type="button">กลับไปเพิ่มร้าน</button>
@@ -226,7 +238,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=25"></script>
+  <script src="app.js?v=28"></script>
   <script src="pwa.js"></script>
   <script src="donate.js"></script>
   <script src="theme.js"></script>

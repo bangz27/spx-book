@@ -229,17 +229,16 @@ body.modal-open { overflow: hidden; }
 .hint { margin: 8px 0 4px; }
 .book-modal-tip { background: var(--warn-bg); color: var(--warn); border-radius: 12px; padding: 10px 12px; font-weight: 600; }
 .book-time-notice {
-  margin: 0 0 14px;
-  padding: 12px 14px;
+  margin: 0 0 12px;
+  padding: 8px 12px;
   background: var(--err-bg);
   color: var(--err);
   border: 0;
-  border-radius: 16px;
+  border-radius: 999px;
   font-weight: 700;
-  line-height: 1.55;
-  white-space: normal;
-  overflow-wrap: anywhere;
-  word-break: break-word;
+  font-size: 13px;
+  line-height: 1.3;
+  text-align: center;
 }
 .book-modal-sum { font-size: 12.5px; margin: 4px 0 6px; }
 .book-modal-list { text-align: left; max-height: 38vh; overflow-y: auto; margin: 0 0 4px; padding-left: 26px; font-size: 12.5px; }

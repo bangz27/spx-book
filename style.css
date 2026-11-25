@@ -291,3 +291,99 @@ body.modal-open { overflow: hidden; }
 .tab-fab svg { width: 22px; height: 22px; stroke: #1A1A1A; stroke-width: 2.4; }
 .tab-fab.active { background: #fff !important; color: #1A1A1A !important; margin: 0 4px; height: 52px; }
 .tab-fab.active svg { stroke: #1A1A1A; width: 22px; height: 22px; }
+
+/* ===== Liquid Glass ===== */
+:root {
+  --bg: #FCEFE8;
+  --muted: #6F6662;
+  --line: rgba(120, 90, 80, .12);
+  --glass: rgba(255, 255, 255, .42);
+  --glass-strong: rgba(255, 255, 255, .62);
+  --glass-edge: rgba(255, 255, 255, .75);
+  --glass-blur: blur(22px) saturate(180%);
+  --glass-hi: inset 0 1px 0 rgba(255, 255, 255, .9), inset 0 -1px 0 rgba(255, 255, 255, .25);
+  --shadow: 0 10px 34px rgba(150, 80, 60, .12);
+  --shadow-soft: 0 4px 14px rgba(150, 80, 60, .08);
+}
+html { background: var(--bg); }
+body { background: transparent; }
+body { position: relative; min-height: 100dvh; }
+body::before {
+  content: ""; position: fixed; inset: -10%; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(42% 36% at 12% 8%, #FFB48A 0%, transparent 70%),
+    radial-gradient(40% 34% at 92% 18%, #FF9DB8 0%, transparent 70%),
+    radial-gradient(48% 40% at 80% 82%, #B7A2FF 0%, transparent 72%),
+    radial-gradient(44% 38% at 6% 78%, #FFD27A 0%, transparent 70%),
+    linear-gradient(160deg, #FFF4EC 0%, #FDE8E4 50%, #F1E8FB 100%);
+  filter: blur(8px);
+}
+
+.card, .modal-card, .ac-box {
+  background: var(--glass);
+  -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-edge);
+  box-shadow: var(--glass-hi), var(--shadow);
+}
+.modal-card, .ac-box { background: var(--glass-strong); }
+.danger-card { background: rgba(255, 236, 234, .5); }
+
+.topbar {
+  background: rgba(255, 244, 238, .28);
+  -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
+  -webkit-mask-image: linear-gradient(#000 75%, transparent); mask-image: linear-gradient(#000 75%, transparent);
+}
+
+input[type=text], input[type=email], input[type=password], input[type=search], select, textarea {
+  background: rgba(255, 255, 255, .6);
+  border: 1px solid rgba(255, 255, 255, .85);
+  box-shadow: inset 0 1px 3px rgba(150, 80, 60, .08);
+}
+input:focus, select:focus, textarea:focus { outline: 2px solid rgba(242, 120, 75, .55); background: rgba(255, 255, 255, .85); }
+
+.btn, .icon-btn {
+  background: rgba(255, 255, 255, .55);
+  border: 1px solid rgba(255, 255, 255, .8);
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  box-shadow: var(--glass-hi), var(--shadow-soft);
+}
+.btn.primary {
+  background: linear-gradient(180deg, #FF946A 0%, #F2784B 55%, #E8653A 100%);
+  border-color: rgba(255, 255, 255, .45);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .55), 0 10px 24px rgba(242, 120, 75, .35);
+}
+.btn.primary:active { background: var(--brand-dark); }
+.btn.dark, #view-login .btn.primary, #view-denied .btn.block, .donate-btn {
+  background: rgba(30, 24, 22, .82); border: 1px solid rgba(255, 255, 255, .18); color: #fff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22), 0 8px 22px rgba(30, 20, 15, .22);
+}
+.add-btn { background: rgba(255, 255, 255, .3); border: 1.5px dashed rgba(242, 120, 75, .7); box-shadow: none; }
+.link { background: none; border: 0; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+.book-del, .mra-del { background: rgba(255, 255, 255, .6); }
+
+.book-time-notice { background: rgba(253, 220, 220, .65); border: 1px solid rgba(255, 255, 255, .7); }
+.msg { background: rgba(255, 255, 255, .45); }
+.badge, .type-tag, .chip { background: rgba(255, 255, 255, .6); }
+.modal { background: rgba(60, 30, 30, .25); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+
+/* Glass pill nav */
+.tabs {
+  background: rgba(255, 255, 255, .45);
+  -webkit-backdrop-filter: blur(26px) saturate(190%); backdrop-filter: blur(26px) saturate(190%);
+  border: 1px solid rgba(255, 255, 255, .8);
+  box-shadow: var(--glass-hi), 0 16px 36px rgba(150, 80, 60, .2);
+}
+.tab { color: rgba(40, 30, 28, .55); background: transparent; border: 0; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; }
+.tab.active { color: var(--brand-dark); }
+.tab.active svg { stroke: var(--brand-dark); }
+.tab-fab {
+  background: linear-gradient(180deg, #FF946A 0%, #F2784B 60%, #E8653A 100%) !important;
+  color: #fff !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .6), 0 8px 20px rgba(242, 120, 75, .45);
+}
+.tab-fab svg, .tab-fab.active svg { stroke: #fff; }
+.tab-fab.active { background: linear-gradient(180deg, #FF946A 0%, #F2784B 60%, #E8653A 100%) !important; color: #fff !important; }
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .card, .modal-card, .ac-box, .tabs { background: rgba(255, 255, 255, .9); }
+}

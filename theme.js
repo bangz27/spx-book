@@ -2,7 +2,7 @@
 (function () {
   var titles = { send: "ส่งงาน", reassign: "เปลี่ยนคนขับ", history: "ประวัติวันนี้", admin: "Admin" };
   var meta = document.querySelector('meta[name="theme-color"]');
-  var BG = "#F6F5F3";
+  var BG = "#FCEFE8";
   function sync() {
     var t = document.querySelector(".tab.active");
     var k = (t && t.dataset.tab) || "send";

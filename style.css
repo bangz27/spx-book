@@ -433,3 +433,78 @@ input:focus, select:focus, textarea:focus { outline: 2px solid rgba(242, 120, 75
 .modal { background: rgba(120, 60, 80, .18); }
 .modal-card { box-shadow: var(--glass-hi), 0 24px 60px rgba(214, 120, 150, .25); }
 .spinner { border-color: rgba(255, 255, 255, .7); border-top-color: var(--accent); }
+
+/* ===== Homebar: send first, rose bubble follows the active tab ===== */
+.tab { position: relative; transition: color .25s ease; }
+.tab svg, .tab-label { position: relative; z-index: 1; }
+.tab::before {
+  content: ""; position: absolute; left: 50%; top: 50%;
+  width: 52px; height: 52px; border-radius: 50%;
+  transform: translate(-50%, -50%) scale(.4); opacity: 0;
+  background: var(--grad-primary);
+  border: 1px solid rgba(255, 255, 255, .55);
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, .6), 0 10px 22px rgba(222, 92, 120, .28);
+  transition: transform .3s cubic-bezier(.2, .9, .3, 1.2), opacity .2s ease;
+}
+.tab.active::before { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+.tab.active, .tab.active svg { color: #fff; stroke: #fff; }
+.tab.active svg { width: 22px; height: 22px; stroke-width: 2.2; }
+.tab.active .tab-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) { .tab::before { transition: none; } }
+
+/* ===== Header frost: page title stays readable over scrolled cards ===== */
+.topbar {
+  z-index: 20;
+  background: linear-gradient(180deg, rgba(255, 244, 242, .9) 0%, rgba(255, 244, 242, .8) 100%);
+  -webkit-backdrop-filter: blur(24px) saturate(170%); backdrop-filter: blur(24px) saturate(170%);
+  -webkit-mask-image: none; mask-image: none;
+}
+.topbar::after {
+  content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 20px;
+  background: linear-gradient(180deg, rgba(255, 244, 242, .8), rgba(255, 244, 242, 0));
+  pointer-events: none;
+}
+
+/* ===== Calm cards (ref: clean metric cards, pill homebar, serif title) ===== */
+.page-title {
+  font-family: "Noto Serif Thai", "Ekkamai Vibe", serif;
+  font-size: 32px; font-weight: 700; letter-spacing: -.4px; line-height: 1.2;
+  margin-top: 10px;
+}
+.card {
+  background: linear-gradient(180deg, rgba(255, 255, 255, .82) 0%, rgba(255, 255, 255, .68) 100%);
+  border: 1px solid rgba(255, 255, 255, .9);
+  border-radius: 28px;
+  padding: 20px 20px 22px;
+  margin-bottom: 16px;
+  box-shadow: inset 0 1.5px 0 #fff, 0 1px 2px rgba(214, 120, 150, .05), 0 14px 34px rgba(214, 120, 150, .10);
+}
+.danger-card { background: linear-gradient(180deg, rgba(255, 246, 246, .85), rgba(255, 238, 240, .7)); }
+.card-title, .card h2.card-title, .section-head h2.card-title {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 19px; font-weight: 700; letter-spacing: -.2px; color: var(--text);
+  margin: 0 0 14px;
+}
+.section-head h2.card-title { margin: 0; }
+.danger-card h2.card-title { color: #B8404F; }
+.ci { flex: 0 0 auto; display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 10px; }
+.ci svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.ci-rose  { color: #D9566F; background: #FFE3EA; }
+.ci-amber { color: #C98A12; background: #FFF1CC; }
+.ci-red   { color: #C9404F; background: #FFE0E2; }
+
+/* Homebar: icon + label on every tab, soft pill behind the active one */
+.tabs { max-width: 460px; padding: 7px; }
+.tab { height: 58px; gap: 3px; font-size: 11px; font-weight: 600; color: #4A3B41; }
+.tab svg { width: 22px; height: 22px; stroke-width: 2; }
+.tab::before {
+  width: calc(100% - 2px); height: 58px; border-radius: 999px;
+  background: rgba(232, 102, 126, .13);
+  border: 1px solid rgba(255, 255, 255, .7);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .8);
+  transform: translate(-50%, -50%) scale(.85);
+}
+.tab.active::before { transform: translate(-50%, -50%) scale(1); }
+.tab.active, .tab.active svg { color: var(--brand-dark); stroke: var(--brand-dark); }
+.tab.active svg { width: 22px; height: 22px; stroke-width: 2.2; }
+.tab.active .tab-label { position: relative; width: auto; height: auto; overflow: visible; clip: auto; font-weight: 700; }
